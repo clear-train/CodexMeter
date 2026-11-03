@@ -11,7 +11,7 @@ enum CodexMeterWindowID {
 struct CodexMeterApp: App {
     @StateObject private var settings: AppSettings
     @StateObject private var history: UsageHistoryModel
-    @StateObject private var usageService: CodexUsageService
+    @StateObject private var usageService: UsageCoordinator
     @StateObject private var updateChecker: UpdateChecker
 
     init() {
@@ -30,7 +30,7 @@ struct CodexMeterApp: App {
         _settings = StateObject(wrappedValue: settings)
         _history = StateObject(wrappedValue: history)
         _usageService = StateObject(
-            wrappedValue: CodexUsageService(settings: settings, history: history)
+            wrappedValue: UsageCoordinator(settings: settings, history: history)
         )
         _updateChecker = StateObject(wrappedValue: updateChecker)
     }
@@ -55,7 +55,8 @@ struct CodexMeterApp: App {
                 appearance: settings.developerAppearance,
                 flashContext: settings.developerPreviewEnabled ? nil : usageService.historyAccountKey.map {
                     $0 + ":" + (settings.popoverContent.selectedMenuBarWindow(from: usageService.windows)?.historyID ?? "")
-                }
+                },
+                captionOverride: usageService.menuBarCaption
             )
         }
         .menuBarExtraStyle(.window)

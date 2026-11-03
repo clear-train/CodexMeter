@@ -37,7 +37,7 @@ final class QuotaModelsTests: XCTestCase {
 
     func testAttentionLevelWarnsWhenUsageIsAbovePace() {
         let now = Date(timeIntervalSince1970: 1_000_000)
-        let window = CodexUsageWindow(
+        let window = UsageWindow(
             id: "test",
             name: "Test",
             usedPercent: 60,
@@ -50,7 +50,7 @@ final class QuotaModelsTests: XCTestCase {
 
     func testAttentionLevelPrioritizesCriticalQuotaBelowTwentyPercent() {
         let now = Date(timeIntervalSince1970: 1_000_000)
-        let window = CodexUsageWindow(
+        let window = UsageWindow(
             id: "test",
             name: "Test",
             usedPercent: 81,
@@ -63,7 +63,7 @@ final class QuotaModelsTests: XCTestCase {
 
     func testTwentyPercentIsNotYetCritical() {
         let now = Date(timeIntervalSince1970: 1_000_000)
-        let window = CodexUsageWindow(
+        let window = UsageWindow(
             id: "test",
             name: "Test",
             usedPercent: 80,
@@ -75,14 +75,14 @@ final class QuotaModelsTests: XCTestCase {
     }
 
     func testMissingResetDataDoesNotGuessPace() {
-        let missingReset = CodexUsageWindow(
+        let missingReset = UsageWindow(
             id: "missing-reset",
             name: "Weekly",
             usedPercent: 20,
             windowDurationMins: sevenDays,
             resetsAt: nil
         )
-        let missingDuration = CodexUsageWindow(
+        let missingDuration = UsageWindow(
             id: "missing-duration",
             name: "Weekly",
             usedPercent: 20,
@@ -97,7 +97,7 @@ final class QuotaModelsTests: XCTestCase {
     }
 
     func testExpiredResetDoesNotGuessPace() {
-        let window = CodexUsageWindow(
+        let window = UsageWindow(
             id: "expired",
             name: "Weekly",
             usedPercent: 20,
@@ -110,7 +110,7 @@ final class QuotaModelsTests: XCTestCase {
     }
 
     func testRemainingTimeIsClampedAtWindowStart() throws {
-        let window = CodexUsageWindow(
+        let window = UsageWindow(
             id: "future",
             name: "Weekly",
             usedPercent: 0,
@@ -232,11 +232,11 @@ final class QuotaModelsTests: XCTestCase {
     private func makeWindow(
         used: Int,
         elapsedFraction: Double = 0
-    ) -> CodexUsageWindow {
+    ) -> UsageWindow {
         // Build deterministic windows relative to a fixed clock for stable tests.
         let durationSeconds = Double(sevenDays * 60)
         let remainingSeconds = durationSeconds * (1 - elapsedFraction)
-        return CodexUsageWindow(
+        return UsageWindow(
             id: "weekly",
             name: "Weekly",
             usedPercent: used,

@@ -91,7 +91,27 @@ has changed.
   Display only locally authored errors selected by protocol code, never raw
   App Server error messages/data or system exception descriptions.
 - `Core/QuotaModels.swift` contains pure quota, remaining-time, and consumption-
-  pace calculations shared with the Swift Package unit tests.
+  pace calculations shared with the Swift Package unit tests. `UsageWindow` is
+  the provider-neutral quota window; do not reintroduce provider-specific window
+  types into views, history, or charts.
+- `Core/UsageProvider.swift` names every quota source and owns its stable
+  history namespace, so one SQLite file can hold several providers without
+  collisions.
+- `Core/OpenCodeGoModels.swift`, `Core/OpenCodeGoCredentialStore.swift`, and
+  `Core/OpenCodeGoClient.swift` implement the OpenCode Go source: payload
+  parsing for both transports, read-only credential discovery, and the CLI/direct
+  request pair with automatic fallback. Keep both transports working: the CLI
+  owns token refresh, and the direct transport must never refresh a token itself
+  because that would rotate the credential OpenCode is still using.
+- `UsageSource.swift` and `UsageCoordinator.swift` keep the UI provider-neutral.
+  Views observe the coordinator, which forwards to exactly one active source;
+  only the active source may own the refresh timer and the activated history
+  partition. Add a provider by conforming to `UsageSource` and adding a case,
+  not by editing views.
+- `OpenCodeGoUsageService.swift` mirrors the quota-facing surface of
+  `CodexUsageService` and records quota history under the OpenCode workspace key.
+  Token activity and banked resets stay unavailable for providers that do not
+  supply them; never fabricate either.
 - `Core/RateLimitResetCredits.swift` decodes optional banked-reset summaries and
   detail rows from the rate-limit response. Missing or `null` summaries mean
   unavailable information rather than a confirmed zero balance.
@@ -557,6 +577,17 @@ Codex App Server.
   section must not clear history, stop background collection, or change refresh
   behavior. Persist the preference locally and localize and accessibility-label
   every customization control.
+
+- [x] Support **OpenCode Go** as a second quota source. Read the 5-hour, weekly,
+  and monthly Go meters from the OpenCode the user is already signed in to,
+  preferring the official `opencode api --standalone experimental.usage.limits`
+  CLI call and falling back to, or optionally using, the direct
+  `/zen/go/v1/usage` request built from the read-only local OpenCode credential.
+  Never write OpenCode's database and never refresh its token. Reuse the same
+  rings, pace hints, reset countdowns, and quota history, keep each provider's
+  history in its own namespace, poll only the selected source, and hide Token
+  Activity for providers that cannot supply it. Later work: per-model Go
+  budgets, extra-usage spending, and other providers.
 
 - [ ] Add an optional **System Monitor** module, starting with real-time network
   throughput in the menu bar. Show separate upload and download rates with

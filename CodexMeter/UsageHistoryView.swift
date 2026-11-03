@@ -3,7 +3,7 @@ import SwiftUI
 import UniformTypeIdentifiers
 
 struct UsageHistoryView: View {
-    @ObservedObject var service: CodexUsageService
+    @ObservedObject var service: UsageCoordinator
     @ObservedObject var settings: AppSettings
     @ObservedObject var history: UsageHistoryModel
     @State private var selectedWindowID: String?

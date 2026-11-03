@@ -301,7 +301,7 @@ enum QuotaWindowSelection {
         durationMins: 7 * 24 * 60
     )
 
-    static func preferredDefault(from windows: [CodexUsageWindow]) -> CodexUsageWindow? {
+    static func preferredDefault(from windows: [UsageWindow]) -> UsageWindow? {
         windows.first(where: { $0.historyID == standardWeeklyHistoryID })
             ?? windows.first(where: { $0.windowDurationMins == 7 * 24 * 60 })
             ?? windows.max { ($0.windowDurationMins ?? 0) < ($1.windowDurationMins ?? 0) }
@@ -314,7 +314,7 @@ enum QuotaWindowSelection {
     }
 }
 
-extension CodexUsageWindow {
+extension UsageWindow {
     /// App Server's primary/secondary slots can swap when a new window appears.
     /// History follows the quota bucket and duration instead of that slot position.
     nonisolated var historyID: String {

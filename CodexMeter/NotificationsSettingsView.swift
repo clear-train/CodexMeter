@@ -2,7 +2,7 @@ import SwiftUI
 
 /// Keeps local alerts and optional remote channels in the same settings category.
 struct NotificationsSettingsView: View {
-    @ObservedObject var service: CodexUsageService
+    @ObservedObject var service: UsageCoordinator
     @ObservedObject var settings: AppSettings
     @ObservedObject var push: PushNotificationService
 

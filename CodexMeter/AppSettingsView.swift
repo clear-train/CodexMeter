@@ -4,7 +4,7 @@ import UniformTypeIdentifiers
 
 /// Shares existing settings objects so reorganizing controls never migrates preferences.
 struct AppSettingsView: View {
-    @ObservedObject var service: CodexUsageService
+    @ObservedObject var service: UsageCoordinator
     @ObservedObject var settings: AppSettings
     @ObservedObject var history: UsageHistoryModel
     @ObservedObject var updateChecker: UpdateChecker
@@ -78,6 +78,30 @@ struct AppSettingsView: View {
 
     private var generalSettings: some View {
         Form {
+            Section(L10n.string("settings.provider.section")) {
+                Picker(L10n.string("settings.provider.source"), selection: Binding(
+                    get: { service.provider },
+                    set: { service.select($0) }
+                )) {
+                    ForEach(UsageProvider.allCases) { Text($0.localizedName).tag($0) }
+                }
+                if service.provider == .openCodeGo {
+                    Picker(L10n.string("settings.provider.opencode_channel"), selection: Binding(
+                        get: { settings.openCodeGoChannel },
+                        set: { settings.openCodeGoChannel = $0; service.openCodeGo.updateChannel($0) }
+                    )) {
+                        ForEach(OpenCodeGoChannel.allCases, id: \.self) { Text($0.localizedName).tag($0) }
+                    }
+                    Text(L10n.string("settings.provider.opencode_help"))
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                    Button(L10n.string("settings.provider.open_console")) {
+                        if let url = service.openCodeGo.consoleURL {
+                            NSWorkspace.shared.open(url)
+                        }
+                    }
+                }
+            }
             Section {
                 Picker(L10n.string("settings.language"), selection: Binding(
                     get: { settings.language },

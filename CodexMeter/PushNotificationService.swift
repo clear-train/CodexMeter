@@ -49,7 +49,7 @@ final class PushNotificationService: ObservableObject {
         }.store(in: &observations)
     }
 
-    func evaluate(windows: [CodexUsageWindow]) {
+    func evaluate(windows: [UsageWindow]) {
         for window in resetTracker.evaluate(windows: windows) {
             let supported: Bool
             switch window.windowDurationMins {

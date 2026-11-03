@@ -24,7 +24,7 @@ private struct ScrollOnlyPopoverIndicators: ViewModifier {
 }
 
 struct ContentView: View {
-    @ObservedObject var service: CodexUsageService
+    @ObservedObject var service: UsageCoordinator
     @ObservedObject var settings: AppSettings
     @ObservedObject var history: UsageHistoryModel
     @ObservedObject var updateChecker: UpdateChecker
@@ -253,7 +253,7 @@ struct ContentView: View {
             .frame(maxWidth: .infinity, alignment: .leading)
     }
 
-    private var visibleQuotaWindows: [CodexUsageWindow] {
+    private var visibleQuotaWindows: [UsageWindow] {
         settings.popoverContent.visibleQuotaWindows(from: service.windows)
     }
 
@@ -266,8 +266,10 @@ struct ContentView: View {
                 return !visibleQuotaWindows.isEmpty
             case .resetCredits:
                 return service.rateLimitResetCredits != nil
-            case .quotaHistory, .tokenActivity:
+            case .quotaHistory:
                 return true
+            case .tokenActivity:
+                return service.supportsTokenActivity
             }
         }
     }
@@ -697,7 +699,7 @@ private struct ResetCreditsSection: View {
 
 /// Opens the shared settings window without expanding the menu bar popover.
 private struct SettingsSection: View {
-    @ObservedObject var service: CodexUsageService
+    @ObservedObject var service: UsageCoordinator
     @ObservedObject var settings: AppSettings
     @Environment(\.openWindow) private var openWindow
 
@@ -724,7 +726,7 @@ private struct SettingsSection: View {
 
 /// Displays quota and time on the same 0...100 scale for direct comparison.
 private struct UsageWindowRow: View {
-    let window: CodexUsageWindow
+    let window: UsageWindow
     let now: Date
     let appearance: MenuBarAppearance
     @Environment(\.colorScheme) private var colorScheme

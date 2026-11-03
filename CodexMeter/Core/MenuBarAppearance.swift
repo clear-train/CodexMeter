@@ -50,7 +50,10 @@ struct MenuBarAppearance: Codable, Equatable {
     var percentageFontWeight = MenuBarFontWeightChoice.semibold
     var percentageVerticalOffset = 0.0
 
-    var captionText = "Codex"
+    /// Shipped caption; the coordinator swaps it for the active provider name.
+    static let defaultCaptionText = "Codex"
+
+    var captionText = defaultCaptionText
     var showsCaption = true
     var captionFontSize = 6.5
     var captionFontWeight = MenuBarFontWeightChoice.medium

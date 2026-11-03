@@ -62,10 +62,10 @@ final class QuotaAlertTrackerTests: XCTestCase {
         let fiveHourReset = start.addingTimeInterval(Double(fiveHours) * 60)
         let weeklyReset = start.addingTimeInterval(6 * 24 * 60 * 60)
         let fiveHour = { (slot: String) in
-            CodexUsageWindow(id: slot, name: "5h", usedPercent: 90, windowDurationMins: self.fiveHours, resetsAt: fiveHourReset)
+            UsageWindow(id: slot, name: "5h", usedPercent: 90, windowDurationMins: self.fiveHours, resetsAt: fiveHourReset)
         }
         let weekly = { (slot: String) in
-            CodexUsageWindow(id: slot, name: "Weekly", usedPercent: 5, windowDurationMins: 7 * 24 * 60, resetsAt: weeklyReset)
+            UsageWindow(id: slot, name: "Weekly", usedPercent: 5, windowDurationMins: 7 * 24 * 60, resetsAt: weeklyReset)
         }
 
         XCTAssertEqual(
@@ -107,8 +107,8 @@ final class QuotaAlertTrackerTests: XCTestCase {
         ).map(\.alert)
     }
 
-    private func makeWindow(id: String, used: Int, resetsAt: Date?) -> CodexUsageWindow {
-        CodexUsageWindow(
+    private func makeWindow(id: String, used: Int, resetsAt: Date?) -> UsageWindow {
+        UsageWindow(
             id: id,
             name: "Codex",
             usedPercent: used,

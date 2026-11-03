@@ -141,6 +141,25 @@ extension QuotaCalendarPeriod {
     }
 }
 
+extension UsageProvider {
+    /// Provider names are product brands and stay untranslated.
+    var localizedName: String {
+        switch self {
+        case .codex: "Codex"
+        case .openCodeGo: "OpenCode Go"
+        }
+    }
+}
+
+extension OpenCodeGoChannel {
+    var localizedName: String {
+        switch self {
+        case .cli: L10n.string("settings.provider.opencode_channel.cli")
+        case .direct: L10n.string("settings.provider.opencode_channel.direct")
+        }
+    }
+}
+
 extension PopoverContentSection {
     var localizedName: String {
         L10n.string("settings.popover.section.\(rawValue)")
@@ -176,6 +195,17 @@ final class AppSettings: ObservableObject {
                 defaults.set(data, forKey: Keys.popoverContent)
             }
         }
+    }
+
+    /// Active quota source. Existing installations keep Codex as the default.
+    @Published var usageProvider: UsageProvider {
+        didSet { defaults.set(usageProvider.rawValue, forKey: Keys.usageProvider) }
+    }
+
+    /// Preferred OpenCode Go transport. The other transport is always used as a
+    /// fallback, so this only controls which path is attempted first.
+    @Published var openCodeGoChannel: OpenCodeGoChannel {
+        didSet { defaults.set(openCodeGoChannel.rawValue, forKey: Keys.openCodeGoChannel) }
     }
 
     @Published var notificationsEnabled: Bool {
@@ -310,6 +340,8 @@ final class AppSettings: ObservableObject {
         static let language = "language"
         static let menuBarStyle = "menuBarStyle"
         static let popoverContent = "popover.contentConfiguration"
+        static let usageProvider = "usage.provider"
+        static let openCodeGoChannel = "usage.openCodeGo.channel"
         static let notificationsEnabled = "notificationsEnabled"
         static let notificationThreshold = "notificationThreshold"
         static let barkEnabled = "push.barkEnabled"
@@ -370,6 +402,12 @@ final class AppSettings: ObservableObject {
         } else {
             popoverContent = .defaultValue
         }
+        usageProvider = UsageProvider(
+            rawValue: defaults.string(forKey: Keys.usageProvider) ?? ""
+        ) ?? .codex
+        openCodeGoChannel = OpenCodeGoChannel(
+            rawValue: defaults.string(forKey: Keys.openCodeGoChannel) ?? ""
+        ) ?? .cli
         notificationsEnabled = defaults.bool(forKey: Keys.notificationsEnabled)
         let storedThreshold = defaults.integer(forKey: Keys.notificationThreshold)
         notificationThreshold = storedThreshold == 0 ? 20 : storedThreshold
@@ -474,7 +512,7 @@ final class AppSettings: ObservableObject {
         popoverContent = updated
     }
 
-    func setQuotaWindow(_ window: CodexUsageWindow, visible: Bool) {
+    func setQuotaWindow(_ window: UsageWindow, visible: Bool) {
         var updated = popoverContent
         updated.setQuotaWindow(window, visible: visible)
         popoverContent = updated

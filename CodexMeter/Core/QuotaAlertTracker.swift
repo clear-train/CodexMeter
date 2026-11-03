@@ -18,7 +18,7 @@ struct QuotaAlertTracker: Codable, Equatable, Sendable {
     static let quotaRecoveryMargin = 2
 
     struct Delivery: Equatable, Sendable {
-        let window: CodexUsageWindow
+        let window: UsageWindow
         let alert: QuotaAlert
     }
 
@@ -38,7 +38,7 @@ struct QuotaAlertTracker: Codable, Equatable, Sendable {
     }
 
     mutating func evaluate(
-        windows: [CodexUsageWindow],
+        windows: [UsageWindow],
         threshold: Int,
         at date: Date
     ) -> [Delivery] {

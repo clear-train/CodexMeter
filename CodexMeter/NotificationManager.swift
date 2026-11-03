@@ -49,7 +49,7 @@ final class NotificationManager {
     }
 
     func evaluate(
-        windows: [CodexUsageWindow],
+        windows: [UsageWindow],
         threshold: Int,
         at date: Date = Date()
     ) {

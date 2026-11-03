@@ -4,7 +4,7 @@ import SwiftUI
 /// Keeping this outside MenuBarExtra prevents the controls from disappearing
 /// whenever the user interacts with a picker or another app window.
 struct PopoverCustomizationView: View {
-    @ObservedObject var service: CodexUsageService
+    @ObservedObject var service: UsageCoordinator
     @ObservedObject var settings: AppSettings
 
     var body: some View {
@@ -146,7 +146,7 @@ struct PopoverCustomizationView: View {
 
 /// Shows the currently enabled sections in their actual stored order.
 private struct PopoverContentPreview: View {
-    @ObservedObject var service: CodexUsageService
+    @ObservedObject var service: UsageCoordinator
     let configuration: PopoverContentConfiguration
 
     private var visibleSections: [PopoverContentSection] {

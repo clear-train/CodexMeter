@@ -16,8 +16,8 @@ struct QuotaResetTracker: Codable, Equatable, Sendable {
     }
 
     /// Evaluates current windows against previous observations and returns windows that underwent a reset.
-    mutating func evaluate(windows: [CodexUsageWindow]) -> [CodexUsageWindow] {
-        var resetWindows: [CodexUsageWindow] = []
+    mutating func evaluate(windows: [UsageWindow]) -> [UsageWindow] {
+        var resetWindows: [UsageWindow] = []
 
         for window in windows {
             let key = window.historyID

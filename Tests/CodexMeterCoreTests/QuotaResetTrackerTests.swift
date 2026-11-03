@@ -89,8 +89,8 @@ final class QuotaResetTrackerTests: XCTestCase {
         used: Int,
         resetsAt: Date,
         duration: Int
-    ) -> CodexUsageWindow {
-        CodexUsageWindow(
+    ) -> UsageWindow {
+        UsageWindow(
             id: id,
             name: "Test Window",
             usedPercent: used,

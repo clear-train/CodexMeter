@@ -54,11 +54,11 @@ struct PopoverContentConfiguration: Codable, Equatable, Sendable {
         }
     }
 
-    func isQuotaWindowVisible(_ window: CodexUsageWindow) -> Bool {
+    func isQuotaWindowVisible(_ window: UsageWindow) -> Bool {
         !hiddenQuotaWindowIDs.contains(window.historyID)
     }
 
-    mutating func setQuotaWindow(_ window: CodexUsageWindow, visible: Bool) {
+    mutating func setQuotaWindow(_ window: UsageWindow, visible: Bool) {
         if visible {
             hiddenQuotaWindowIDs.remove(window.historyID)
         } else {
@@ -66,7 +66,7 @@ struct PopoverContentConfiguration: Codable, Equatable, Sendable {
         }
     }
 
-    func visibleQuotaWindows(from windows: [CodexUsageWindow]) -> [CodexUsageWindow] {
+    func visibleQuotaWindows(from windows: [UsageWindow]) -> [UsageWindow] {
         guard isSectionVisible(.quotaWindows) else { return [] }
         return windows.filter(isQuotaWindowVisible)
     }
@@ -78,7 +78,7 @@ struct PopoverContentConfiguration: Codable, Equatable, Sendable {
         sectionOrder.swapAt(sourceIndex, destinationIndex)
     }
 
-    func selectedMenuBarWindow(from windows: [CodexUsageWindow]) -> CodexUsageWindow? {
+    func selectedMenuBarWindow(from windows: [UsageWindow]) -> UsageWindow? {
         if let menuBarQuotaWindowID,
            let selected = windows.first(where: { $0.historyID == menuBarQuotaWindowID }) {
             return selected

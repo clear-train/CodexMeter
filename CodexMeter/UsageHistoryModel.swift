@@ -33,7 +33,7 @@ final class UsageHistoryModel: ObservableObject {
     }
 
     func recordQuota(
-        windows: [CodexUsageWindow],
+        windows: [UsageWindow],
         at date: Date,
         isStale: Bool,
         source: QuotaSampleSource,

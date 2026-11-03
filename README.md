@@ -1,7 +1,8 @@
 # CodexMeter
 
-CodexMeter is a native macOS menu bar app that keeps your Codex account limits
-visible at a glance.
+CodexMeter is a native macOS menu bar app that keeps your AI subscription limits
+visible at a glance. It reads Codex account quota and, with the same rings,
+charts, and history, OpenCode Go limits.
 
 ![macOS 13+](https://img.shields.io/badge/macOS-13%2B-black)
 ![Swift](https://img.shields.io/badge/Swift-5-orange)
@@ -51,6 +52,9 @@ visible at a glance.
 - Shows available banked Codex rate-limit resets as one compact lifetime
   progress bar and expiration time per reset. This view is read-only and cannot
   redeem a reset.
+- Supports OpenCode Go as a second quota source. It shows the 5-hour, weekly,
+  and monthly Go meters with the same rings, pace hints, reset countdowns, and
+  quota history, and keeps OpenCode's history in its own local partition.
 - Compares remaining quota with remaining time to indicate whether consumption
   is on pace.
 - Refreshes quota on launch, every 10 seconds while the menu is open, every
@@ -150,12 +154,46 @@ Codex App Server is currently an experimental interface intended for local
 development and debugging, so future Codex releases may require compatibility
 updates. See the official [Codex App Server documentation](https://learn.chatgpt.com/docs/app-server).
 
+### OpenCode Go
+
+Choose **OpenCode Go** as the quota source in Settings. CodexMeter then reads the
+Go limits of the OpenCode workspace you are already signed in to. Two
+connections are available, and the app falls back to the other one whenever the
+preferred connection fails:
+
+1. **Official CLI (default).** CodexMeter runs
+
+   ```text
+   opencode api --standalone experimental.usage.limits
+   ```
+
+   and reads the JSON it prints. The CLI owns authentication, so it also
+   refreshes an expired session token by itself.
+2. **Direct API (faster).** CodexMeter reads the OpenCode OAuth credential from
+   `opencode.db` inside OpenCode's data directory (`$XDG_DATA_HOME/opencode`, or
+   `~/.local/share/opencode`) with a read-only SQLite connection, then calls
+   `GET https://opencode.ai/zen/go/v1/usage` with that token and the workspace
+   identifier. The database is never modified. If the stored token has already
+   expired, CodexMeter falls back to the CLI instead of refreshing it, because
+   refreshing the token would rotate the credential OpenCode is using.
+
+OpenCode Go limits are monthly dollar budgets. The 5-hour window corresponds to
+20% of that budget, the weekly window to 50%, and the monthly window to 100%, so
+the same three meters answer both "can I keep going now" and "will this last the
+week". OpenCode Go also exposes per-model budgets; CodexMeter does not read them
+yet. See the [OpenCode Go documentation](https://opencode.ai/docs/go).
+
+Only the selected source polls. Switching sources stops the other source's
+refresh timer and releases its visible history partition, so the two providers
+never compete for the menu bar, for local history, or for your OpenCode login.
+
 ## Requirements
 
 - macOS 13 or later.
 - Xcode 27 beta or later when building the current project from source.
-- A locally installed Codex CLI.
-- A working Codex login.
+- A locally installed Codex CLI with a working Codex login for the Codex source.
+- The OpenCode CLI, signed in to a workspace with a Go subscription, for the
+  OpenCode Go source. `opencode upgrade` keeps the CLI current.
 
 Install and sign in to Codex CLI if needed:
 
@@ -172,6 +210,13 @@ CodexMeter currently discovers `codex` in these locations:
 /usr/local/bin/codex
 ~/.npm-global/bin/codex
 ~/.nvm/versions/node/*/bin/codex
+```
+
+CodexMeter discovers `opencode` in these locations:
+
+```text
+/opt/homebrew/bin/opencode
+/usr/local/bin/opencode
 ```
 
 ## Build and Run
@@ -303,6 +348,12 @@ verification checklist, and planned developer customization options.
 - Usage history is stored only in
   `~/Library/Application Support/CodexMeter/UsageHistory.sqlite` and can be
   exported or cleared by the user.
+- For OpenCode Go, CodexMeter reads OpenCode's own credential read-only and
+  never writes to `opencode.db`, never stores the access or refresh token, never
+  logs the workspace email, and never refreshes a token itself. Only the JSON-RPC
+  or HTTPS quota response is kept: the three meter percentages and their reset
+  times. OpenCode Go history is separated from Codex history by a prefixed
+  account key, and CSV exports never include that key.
 
 App Sandbox is currently disabled because CodexMeter must launch the user's
 local Codex executable. This should be reviewed deliberately before any future
@@ -312,6 +363,8 @@ Mac App Store distribution.
 
 The menu-bar **Settings** entry opens one resizable window with General,
 Menu Bar & Popover, Notifications, History & Backup, and Developer, followed by About.
+**General → Quota source** switches between Codex and OpenCode Go and, for
+OpenCode Go, between the official CLI and the direct API connection.
 Existing preferences are preserved. About/update information opens in the same
 settings window; Usage History remains a separate window.
 
@@ -384,6 +437,10 @@ Backups larger than 512 MiB are currently unsupported.
 - The downloadable DMG is ad-hoc signed, not notarized, and not prepared for
   the Mac App Store, so first launch may require Control-clicking the app and
   choosing **Open**.
+- OpenCode Go support reads the quota meters the official CLI and console API
+  expose. Per-model Go budgets, extra-usage spending, and token activity are not
+  shown yet, and the OpenCode endpoints behind `experimental.usage.limits` may
+  change between CLI releases.
 
 ## Contributing
 

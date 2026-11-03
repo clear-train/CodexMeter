@@ -13,7 +13,7 @@ enum QuotaAttentionLevel: Equatable, Sendable {
     case critical
 }
 
-struct CodexUsageWindow: Identifiable, Equatable, Sendable {
+struct UsageWindow: Identifiable, Equatable, Sendable {
     let id: String
     let name: String
     let usedPercent: Int

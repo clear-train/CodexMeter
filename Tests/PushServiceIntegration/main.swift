@@ -22,7 +22,7 @@ enum L10n {
     static func string(_ key: String) -> String { key }
     static func format(_ key: String, _ args: CVarArg...) -> String { "quota \(args)" }
 }
-extension CodexUsageWindow {
+extension UsageWindow {
     var historyID: String { "\(id):\(windowDurationMins ?? 0)" }
 }
 enum QuotaCycleDetection {
@@ -72,7 +72,7 @@ final class FakePushProtocol: URLProtocol {
         let config = URLSessionConfiguration.ephemeral; config.protocolClasses = [FakePushProtocol.self]
         return (settings, PushNotificationService(settings: settings, sessionConfiguration: config))
     }
-    static func window(_ used: Int, duration: Int = 300) -> CodexUsageWindow {
+    static func window(_ used: Int, duration: Int = 300) -> UsageWindow {
         .init(id: "quota", name: "Quota", usedPercent: used, windowDurationMins: duration, resetsAt: Date(timeIntervalSince1970: 1_800_000_000))
     }
     static func trigger(_ service: PushNotificationService) {

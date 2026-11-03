@@ -177,7 +177,7 @@ actor UsageHistoryStore {
 
     @discardableResult
     func recordQuotaSnapshots(
-        _ windows: [CodexUsageWindow],
+        _ windows: [UsageWindow],
         at date: Date,
         isStale: Bool,
         source: QuotaSampleSource,
@@ -577,7 +577,7 @@ actor UsageHistoryStore {
                     88,
                     Int((Double(indexInCycle) / Double(samplesPerCycle) * 88).rounded())
                 )
-                let window = CodexUsageWindow(
+                let window = UsageWindow(
                     id: "developer-preview-weekly",
                     name: windowName,
                     usedPercent: consumed,
@@ -868,7 +868,7 @@ actor UsageHistoryStore {
     }
 
     private func insertQuotaSample(
-        window: CodexUsageWindow,
+        window: UsageWindow,
         date: Date,
         remainingPercent: Int,
         startsSegment: Bool,

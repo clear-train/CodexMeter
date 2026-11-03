@@ -5,8 +5,8 @@ import Foundation
 ///
 /// Authentication remains inside Codex. This app only exchanges JSON-RPC
 /// messages with the locally installed `codex app-server` process over stdio.
-final class CodexUsageService: ObservableObject {
-    @Published private(set) var windows: [CodexUsageWindow] = []
+final class CodexUsageService: ObservableObject, UsageSource {
+    @Published private(set) var windows: [UsageWindow] = []
     @Published private(set) var planType: String?
     @Published private(set) var isLoading = false
     @Published private(set) var isRefreshInFlight = false
@@ -42,7 +42,7 @@ final class CodexUsageService: ObservableObject {
     private var pendingRequests: [Int: RequestKind] = [:]
     private var refreshTimer: Timer?
     private var isPopoverVisible = false
-    private var lastHistorySnapshot: [CodexUsageWindow]?
+    private var lastHistorySnapshot: [UsageWindow]?
     private var lastHistoryAccountKey: String?
     private var lastHistoryRecordAt: Date?
     private var refreshTimeout: DispatchWorkItem?
@@ -61,7 +61,8 @@ final class CodexUsageService: ObservableObject {
         settings: AppSettings,
         history: UsageHistoryModel,
         notificationManager: NotificationManager = NotificationManager(),
-        pushNotificationService: PushNotificationService? = nil
+        pushNotificationService: PushNotificationService? = nil,
+        autostart: Bool = true
     ) {
         self.settings = settings
         self.history = history
@@ -70,8 +71,9 @@ final class CodexUsageService: ObservableObject {
 
         // Defer startup until StateObject construction has completed on the main run loop.
         DispatchQueue.main.async { [weak self] in
-            self?.installRefreshTimer()
-            self?.start()
+            guard let self, autostart else { return }
+            self.installRefreshTimer()
+            self.start()
         }
     }
 
@@ -79,7 +81,7 @@ final class CodexUsageService: ObservableObject {
         mostConstrainedWindow?.remainingPercent
     }
 
-    var mostConstrainedWindow: CodexUsageWindow? {
+    var mostConstrainedWindow: UsageWindow? {
         // The menu bar should always represent the window closest to exhaustion.
         windows.min { $0.remainingPercent < $1.remainingPercent }
     }
@@ -285,6 +287,27 @@ final class CodexUsageService: ObservableObject {
         if Date().timeIntervalSince(lastUpdated) >= maxAge {
             refresh()
         }
+    }
+
+    // MARK: - Provider activation
+
+    /// Called when Codex becomes the selected quota source.
+    func activate() {
+        installRefreshTimer()
+        start()
+        if let historyAccountKey {
+            history.activateAccount(historyAccountKey, resetExisting: false, claimLegacyHistory: false)
+        }
+        refresh()
+    }
+
+    /// Called when another source takes over: stop polling and release the
+    /// visible history partition without discarding the App Server process.
+    func deactivate() {
+        refreshTimer?.invalidate()
+        refreshTimer = nil
+        isPopoverVisible = false
+        history.deactivateAccount()
     }
 
     func setPopoverVisible(_ visible: Bool) {
@@ -661,7 +684,7 @@ final class CodexUsageService: ObservableObject {
     }
 
     private func parseRateLimits(_ result: [String: Any], source: QuotaSampleSource) {
-        var parsed: [CodexUsageWindow] = []
+        var parsed: [UsageWindow] = []
 
         // Support both current multi-bucket responses and the legacy single snapshot.
         if let buckets = result["rateLimitsByLimitId"] as? [String: Any],
@@ -728,7 +751,7 @@ final class CodexUsageService: ObservableObject {
     }
 
     private func shouldRecordQuotaHistory(
-        _ current: [CodexUsageWindow],
+        _ current: [UsageWindow],
         accountKey: String,
         at date: Date
     ) -> Bool {
@@ -824,11 +847,11 @@ final class CodexUsageService: ObservableObject {
     private func parseSnapshot(
         _ snapshot: [String: Any],
         fallbackID: String
-    ) -> [CodexUsageWindow] {
+    ) -> [UsageWindow] {
         let limitID = snapshot["limitId"] as? String ?? fallbackID
         let rawName = snapshot["limitName"] as? String
         let bucketName = friendlyBucketName(rawName ?? limitID)
-        var result: [CodexUsageWindow] = []
+        var result: [UsageWindow] = []
 
         if let primary = snapshot["primary"] as? [String: Any],
            let window = makeWindow(primary, id: "\(limitID)-primary", bucketName: bucketName) {
@@ -847,7 +870,7 @@ final class CodexUsageService: ObservableObject {
         _ object: [String: Any],
         id: String,
         bucketName: String
-    ) -> CodexUsageWindow? {
+    ) -> UsageWindow? {
         guard let usedPercent = object["usedPercent"] as? Int else { return nil }
 
         let duration = object["windowDurationMins"] as? Int
@@ -857,7 +880,7 @@ final class CodexUsageService: ObservableObject {
             ? durationName
             : L10n.format("duration.bucket_format", bucketName, durationName)
 
-        return CodexUsageWindow(
+        return UsageWindow(
             id: id,
             name: displayName,
             usedPercent: usedPercent,

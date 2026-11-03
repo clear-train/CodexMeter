@@ -138,8 +138,8 @@ final class PopoverContentConfigurationTests: XCTestCase {
         name: String,
         duration: Int,
         used: Int
-    ) -> CodexUsageWindow {
-        CodexUsageWindow(
+    ) -> UsageWindow {
+        UsageWindow(
             id: id,
             name: name,
             usedPercent: used,

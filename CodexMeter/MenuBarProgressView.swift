@@ -12,6 +12,9 @@ struct MenuBarProgressView: View {
     let isStale: Bool
     let appearance: MenuBarAppearance
     var flashContext: String? = nil
+    /// Replaces the configured caption so the default brand text can follow the
+    /// active quota source without overwriting the user's edited caption.
+    var captionOverride: String? = nil
 
     @State private var previousFlashSample: FlashSample?
     @State private var flashIntensity: CGFloat = 0
@@ -28,7 +31,8 @@ struct MenuBarProgressView: View {
         attentionLevel: QuotaAttentionLevel,
         isStale: Bool,
         appearance: MenuBarAppearance,
-        flashContext: String? = nil
+        flashContext: String? = nil,
+        captionOverride: String? = nil
     ) {
         self.remainingPercent = remainingPercent
         self.remainingTimePercent = remainingTimePercent
@@ -38,6 +42,7 @@ struct MenuBarProgressView: View {
         self.isStale = isStale
         self.appearance = appearance
         self.flashContext = flashContext
+        self.captionOverride = captionOverride
     }
 
     private struct FlashSample: Equatable {
@@ -405,7 +410,8 @@ struct MenuBarProgressView: View {
     }
 
     private func drawPercentageAndCaption(in rect: NSRect, appearance: MenuBarAppearance) {
-        let shouldDrawCaption = appearance.showsCaption && !appearance.captionText.isEmpty
+        let caption = captionOverride ?? appearance.captionText
+        let shouldDrawCaption = appearance.showsCaption && !caption.isEmpty
         if shouldDrawCaption {
             drawText(
                 title,
@@ -423,7 +429,7 @@ struct MenuBarProgressView: View {
                 highlightsChangedDigits: true
             )
             drawText(
-                appearance.captionText,
+                caption,
                 in: NSRect(
                     x: rect.minX,
                     y: CGFloat(appearance.captionVerticalOffset),

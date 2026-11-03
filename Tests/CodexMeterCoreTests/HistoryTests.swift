@@ -123,7 +123,7 @@ final class HistoryTests: XCTestCase {
         defer { try? FileManager.default.removeItem(at: fixture.directory) }
         try await fixture.store.prepareDatabase()
         let now = Date(timeIntervalSince1970: 1_800_000_000)
-        let weekly = CodexUsageWindow(
+        let weekly = UsageWindow(
             id: "codex-weekly",
             name: "Weekly",
             usedPercent: 20,
@@ -172,21 +172,21 @@ final class HistoryTests: XCTestCase {
         defer { try? FileManager.default.removeItem(at: fixture.directory) }
         try await fixture.store.prepareDatabase()
         let start = Date(timeIntervalSince1970: 1_800_000_000)
-        let firstWeekly = CodexUsageWindow(
+        let firstWeekly = UsageWindow(
             id: "codex-primary",
             name: "Weekly quota",
             usedPercent: 20,
             windowDurationMins: 10_080,
             resetsAt: start.addingTimeInterval(7 * 24 * 60 * 60)
         )
-        let fiveHour = CodexUsageWindow(
+        let fiveHour = UsageWindow(
             id: "codex-primary",
             name: "5-hour quota",
             usedPercent: 10,
             windowDurationMins: 300,
             resetsAt: start.addingTimeInterval(5 * 60 * 60)
         )
-        let movedWeekly = CodexUsageWindow(
+        let movedWeekly = UsageWindow(
             id: "codex-secondary",
             name: "Weekly quota",
             usedPercent: 21,
@@ -226,14 +226,14 @@ final class HistoryTests: XCTestCase {
         defer { try? FileManager.default.removeItem(at: fixture.directory) }
         try await fixture.store.prepareDatabase()
         let now = Date(timeIntervalSince1970: 1_800_000_000)
-        let primary = CodexUsageWindow(
+        let primary = UsageWindow(
             id: "codex-primary",
             name: "Weekly quota",
             usedPercent: 20,
             windowDurationMins: 10_080,
             resetsAt: now.addingTimeInterval(7 * 24 * 60 * 60)
         )
-        let secondary = CodexUsageWindow(
+        let secondary = UsageWindow(
             id: "codex-secondary",
             name: "Weekly quota",
             usedPercent: 21,
@@ -1207,8 +1207,8 @@ final class HistoryTests: XCTestCase {
         return (directory, store)
     }
 
-    private func usageWindow(usedPercent: Int, resetsAt: Date) -> CodexUsageWindow {
-        CodexUsageWindow(
+    private func usageWindow(usedPercent: Int, resetsAt: Date) -> UsageWindow {
+        UsageWindow(
             id: "codex-primary",
             name: "5 hours",
             usedPercent: usedPercent,
