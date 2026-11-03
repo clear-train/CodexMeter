@@ -55,6 +55,9 @@ charts, and history, OpenCode Go limits.
 - Supports OpenCode Go as a second quota source. It shows the 5-hour, weekly,
   and monthly Go meters with the same rings, pace hints, reset countdowns, and
   quota history, and keeps OpenCode's history in its own local partition.
+- Monitors Codex and OpenCode Go at the same time. Both keep refreshing in the
+  background; tabs at the top of the popover switch which one is shown, and each
+  tab carries its own most-constrained percentage.
 - Compares remaining quota with remaining time to indicate whether consumption
   is on pace.
 - Refreshes quota on launch, every 10 seconds while the menu is open, every
@@ -156,8 +159,9 @@ updates. See the official [Codex App Server documentation](https://learn.chatgpt
 
 ### OpenCode Go
 
-Choose **OpenCode Go** as the quota source in Settings. CodexMeter then reads the
-Go limits of the OpenCode workspace you are already signed in to. Two
+OpenCode Go is the second tab of the popover, and it reads the Go limits of the
+OpenCode workspace you are already signed in to. Choosing a quota source in
+Settings only picks the tab shown first. Two
 connections are available, and the app falls back to the other one whenever the
 preferred connection fails:
 
@@ -363,8 +367,10 @@ Mac App Store distribution.
 
 The menu-bar **Settings** entry opens one resizable window with General,
 Menu Bar & Popover, Notifications, History & Backup, and Developer, followed by About.
-**General → Quota source** switches between Codex and OpenCode Go and, for
-OpenCode Go, between the official CLI and the direct API connection.
+**General → Quota source** picks the tab shown first and, for OpenCode Go, the
+connection between the official CLI and the direct API. **Menu Bar & Popover →
+Ring source** chooses the quota window drawn in the menu bar; the choice is
+remembered per provider, and both providers keep refreshing while one is shown.
 Existing preferences are preserved. About/update information opens in the same
 settings window; Usage History remains a separate window.
 

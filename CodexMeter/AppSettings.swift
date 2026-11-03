@@ -524,9 +524,9 @@ final class AppSettings: ObservableObject {
         popoverContent = updated
     }
 
-    func setMenuBarQuotaWindowID(_ id: String?) {
+    func setMenuBarWindowID(_ id: String?, provider: UsageProvider) {
         var updated = popoverContent
-        updated.menuBarQuotaWindowID = id
+        updated.setMenuBarWindowID(id, provider: provider)
         popoverContent = updated
     }
 

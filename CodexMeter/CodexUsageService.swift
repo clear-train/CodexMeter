@@ -41,6 +41,11 @@ final class CodexUsageService: ObservableObject, UsageSource {
     // Request IDs let responses arrive independently without losing their type.
     private var pendingRequests: [Int: RequestKind] = [:]
     private var refreshTimer: Timer?
+    /// True when the popover is showing this provider's history partition.
+    private var isHistoryViewActive = false
+    /// Latest partition that should be visible once this provider becomes the
+    /// one the popover shows. Kept so switching providers needs no refetch.
+    private var pendingHistoryActivation: (key: String, resetExisting: Bool, claimLegacyHistory: Bool)?
     private var isPopoverVisible = false
     private var lastHistorySnapshot: [UsageWindow]?
     private var lastHistoryAccountKey: String?
@@ -291,22 +296,57 @@ final class CodexUsageService: ObservableObject, UsageSource {
 
     // MARK: - Provider activation
 
-    /// Called when Codex becomes the selected quota source.
+    /// Starts polling. Several providers poll at the same time; only the one the
+    /// popover is showing owns the visible history partition.
     func activate() {
         installRefreshTimer()
         start()
-        if let historyAccountKey {
-            history.activateAccount(historyAccountKey, resetExisting: false, claimLegacyHistory: false)
-        }
         refresh()
     }
 
-    /// Called when another source takes over: stop polling and release the
-    /// visible history partition without discarding the App Server process.
+    /// Stops polling without discarding the App Server process.
     func deactivate() {
         refreshTimer?.invalidate()
         refreshTimer = nil
         isPopoverVisible = false
+    }
+
+    /// Toggles ownership of the visible history partition. Recording history is
+    /// independent: `recordQuota` writes to this provider's own account key.
+    func setHistoryViewActive(_ active: Bool) {
+        guard isHistoryViewActive != active else { return }
+        isHistoryViewActive = active
+        if active {
+            guard let pending = pendingHistoryActivation else { return }
+            history.activateAccount(
+                pending.key,
+                resetExisting: pending.resetExisting,
+                claimLegacyHistory: pending.claimLegacyHistory
+            )
+        } else {
+            pendingHistoryActivation = pendingHistoryActivation
+                ?? historyAccountKey.map { (key: $0, resetExisting: false, claimLegacyHistory: false) }
+            history.deactivateAccount()
+        }
+    }
+
+    private func activateHistoryPartition(
+        _ key: String,
+        resetExisting: Bool = false,
+        claimLegacyHistory: Bool = false
+    ) {
+        pendingHistoryActivation = (key, resetExisting, claimLegacyHistory)
+        guard isHistoryViewActive else { return }
+        history.activateAccount(
+            key,
+            resetExisting: resetExisting,
+            claimLegacyHistory: claimLegacyHistory
+        )
+    }
+
+    private func deactivateHistoryPartition() {
+        pendingHistoryActivation = nil
+        guard isHistoryViewActive else { return }
         history.deactivateAccount()
     }
 
@@ -615,7 +655,7 @@ final class CodexUsageService: ObservableObject, UsageSource {
         lastHistoryRecordAt = nil
         hasPendingAccountBoundary = true
         refreshSchedule = CodexRefreshSchedule()
-        history.deactivateAccount()
+        deactivateHistoryPartition()
         notificationManager.resetEvaluationState()
         pushNotificationService.resetEvaluationState()
 
@@ -639,7 +679,7 @@ final class CodexUsageService: ObservableObject, UsageSource {
             errorMessage = L10n.string("error.not_logged_in")
             historyAccountKey = nil
             hasPendingAccountBoundary = false
-            history.deactivateAccount()
+            deactivateHistoryPartition()
             return
         }
 
@@ -658,7 +698,7 @@ final class CodexUsageService: ObservableObject, UsageSource {
         if accountChanged {
             tokenUsage = nil
             refreshSchedule.lastUsageAttempt = nil
-            history.activateAccount(
+            activateHistoryPartition(
                 identity.key,
                 resetExisting: shouldResetAnonymousHistory,
                 claimLegacyHistory: identity.isStable

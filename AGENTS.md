@@ -104,10 +104,15 @@ has changed.
   owns token refresh, and the direct transport must never refresh a token itself
   because that would rotate the credential OpenCode is still using.
 - `UsageSource.swift` and `UsageCoordinator.swift` keep the UI provider-neutral.
-  Views observe the coordinator, which forwards to exactly one active source;
-  only the active source may own the refresh timer and the activated history
-  partition. Add a provider by conforming to `UsageSource` and adding a case,
-  not by editing views.
+  Views observe the coordinator, which forwards to the source the popover is
+  showing. Every source keeps its own refresh timer and keeps recording history
+  under its own account key; only the shown source calls
+  `history.activateAccount` (see `setHistoryViewActive`), because the history
+  model exposes a single visible partition. Add a provider by conforming to
+  `UsageSource` and adding a case, not by editing views.
+- `Core/PopoverContentConfiguration.swift` stores the menu bar ring window per
+  provider (`menuBarQuotaWindowIDs`, keyed by `UsageProvider.rawValue`) and still
+  decodes the pre-provider single `menuBarQuotaWindowID` for migration.
 - `OpenCodeGoUsageService.swift` mirrors the quota-facing surface of
   `CodexUsageService` and records quota history under the OpenCode workspace key.
   Token activity and banked resets stay unavailable for providers that do not
@@ -585,9 +590,10 @@ Codex App Server.
   `/zen/go/v1/usage` request built from the read-only local OpenCode credential.
   Never write OpenCode's database and never refresh its token. Reuse the same
   rings, pace hints, reset countdowns, and quota history, keep each provider's
-  history in its own namespace, poll only the selected source, and hide Token
-  Activity for providers that cannot supply it. Later work: per-model Go
-  budgets, extra-usage spending, and other providers.
+  history in its own namespace, and hide Token Activity for providers that
+  cannot supply it. Both providers now poll in parallel and the popover switches
+  between them with tabs; the menu bar ring window is chosen per provider.
+  Later work: per-model Go budgets, extra-usage spending, and other providers.
 
 - [ ] Add an optional **System Monitor** module, starting with real-time network
   throughput in the menu bar. Show separate upload and download rates with

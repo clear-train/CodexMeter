@@ -27,6 +27,11 @@ final class OpenCodeGoUsageService: ObservableObject, UsageSource {
     let pushNotificationService: PushNotificationService
     private var client: OpenCodeGoClient
     private var refreshTimer: Timer?
+    /// True when the popover is showing this provider's history partition.
+    private var isHistoryViewActive = false
+    /// Latest partition that should be visible once this provider becomes the
+    /// one the popover shows. Kept so switching providers needs no refetch.
+    private var pendingHistoryActivation: (key: String, resetExisting: Bool, claimLegacyHistory: Bool)?
     private var isPopoverVisible = false
     private var refreshSchedule = CodexRefreshSchedule()
     private var isFetching = false
@@ -83,21 +88,37 @@ final class OpenCodeGoUsageService: ObservableObject, UsageSource {
 
     // MARK: - Provider activation
 
-    /// Called when OpenCode Go becomes the selected quota source.
+    /// Starts polling. Several providers poll at the same time; the popover
+    /// shows exactly one of them.
     func activate() {
         installRefreshTimer()
         start()
-        if let historyAccountKey, !windows.isEmpty {
-            history.activateAccount(historyAccountKey, resetExisting: false, claimLegacyHistory: false)
-        }
     }
 
-    /// Called when another source takes over.
+    /// Stops polling without discarding the last snapshot.
     func deactivate() {
         refreshTimer?.invalidate()
         refreshTimer = nil
         isPopoverVisible = false
-        suspendForProviderSwitch()
+    }
+
+    /// Toggles ownership of the visible history partition. Recording keeps
+    /// working for every source because `recordQuota` is keyed per account.
+    func setHistoryViewActive(_ active: Bool) {
+        guard isHistoryViewActive != active else { return }
+        isHistoryViewActive = active
+        if active {
+            guard let pending = pendingHistoryActivation else { return }
+            history.activateAccount(
+                pending.key,
+                resetExisting: pending.resetExisting,
+                claimLegacyHistory: pending.claimLegacyHistory
+            )
+        } else {
+            pendingHistoryActivation = pendingHistoryActivation
+                ?? historyAccountKey.map { (key: $0, resetExisting: false, claimLegacyHistory: false) }
+            history.deactivateAccount()
+        }
     }
 
     func start() {
@@ -182,25 +203,6 @@ final class OpenCodeGoUsageService: ObservableObject, UsageSource {
         }
     }
 
-    /// Drops the visible snapshot when another source takes over the popover so a
-    /// stale provider reading can never be presented as the active one.
-    func suspendForProviderSwitch() {
-        isFetching = false
-        isRefreshInFlight = false
-        isStale = !windows.isEmpty
-        history.deactivateAccount()
-        notificationManager.resetEvaluationState()
-        pushNotificationService.resetEvaluationState()
-        lastHistorySnapshot = nil
-        lastHistoryAccountKey = nil
-        lastHistoryRecordAt = nil
-        historyAccountKey = nil
-        workspaceName = nil
-        planType = nil
-        windows = []
-        errorMessage = nil
-    }
-
     private func apply(_ snapshot: OpenCodeGoUsageSnapshot) {
         let names: [UsageWindowKind: String] = [
             .rolling: L10n.string("provider.opencode_go.window.rolling"),
@@ -221,7 +223,10 @@ final class OpenCodeGoUsageService: ObservableObject, UsageSource {
         let accountKey = UsageProvider.openCodeGo.historyAccountKey(for: snapshot.workspaceID)
         if historyAccountKey != accountKey {
             historyAccountKey = accountKey
-            history.activateAccount(accountKey, resetExisting: false, claimLegacyHistory: false)
+            pendingHistoryActivation = (accountKey, false, false)
+            if isHistoryViewActive {
+                history.activateAccount(accountKey, resetExisting: false, claimLegacyHistory: false)
+            }
         }
 
         isLoading = false

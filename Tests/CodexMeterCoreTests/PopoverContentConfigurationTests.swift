@@ -29,7 +29,8 @@ final class PopoverContentConfigurationTests: XCTestCase {
         XCTAssertTrue(configuration.isQuotaWindowVisible(fiveHour))
         XCTAssertTrue(configuration.isQuotaWindowVisible(weekly))
         XCTAssertFalse(configuration.isQuotaWindowVisible(reserve))
-        XCTAssertNil(configuration.menuBarQuotaWindowID)
+        XCTAssertNil(configuration.menuBarWindowID(for: .codex))
+        XCTAssertNil(configuration.menuBarWindowID(for: .openCodeGo))
     }
 
     func testQuotaWindowsCanBeHiddenIndependentlyByStableIdentity() {
@@ -49,18 +50,21 @@ final class PopoverContentConfigurationTests: XCTestCase {
         let fiveHour = makeWindow(id: "codex-primary", name: "5h", duration: 300, used: 80)
         let weekly = makeWindow(id: "codex-secondary", name: "Weekly", duration: 10_080, used: 20)
 
-        configuration.menuBarQuotaWindowID = weekly.historyID
+        configuration.setMenuBarWindowID(weekly.historyID, provider: .codex)
 
-        XCTAssertEqual(configuration.selectedMenuBarWindow(from: [fiveHour, weekly]), weekly)
+        XCTAssertEqual(
+            configuration.selectedMenuBarWindow(from: [fiveHour, weekly], provider: .codex),
+            weekly
+        )
     }
 
     func testMissingMenuBarSelectionFallsBackToLowestRemainingQuota() {
         var configuration = PopoverContentConfiguration.defaultValue
-        configuration.menuBarQuotaWindowID = "duration:999:missing"
+        configuration.setMenuBarWindowID("duration:999:missing", provider: .codex)
         let fiveHour = makeWindow(id: "codex-primary", name: "5h", duration: 300, used: 80)
         let weekly = makeWindow(id: "codex-secondary", name: "Weekly", duration: 10_080, used: 20)
 
-        XCTAssertEqual(configuration.selectedMenuBarWindow(from: [weekly, fiveHour]), fiveHour)
+        XCTAssertEqual(configuration.selectedMenuBarWindow(from: [weekly, fiveHour], provider: .codex), fiveHour)
     }
 
     func testAutomaticSelectionUsesWeeklyQuotaWhenItHasLessRemaining() {
@@ -73,7 +77,7 @@ final class PopoverContentConfigurationTests: XCTestCase {
             used: 90
         )
 
-        XCTAssertEqual(configuration.selectedMenuBarWindow(from: [fiveHour, weekly]), weekly)
+        XCTAssertEqual(configuration.selectedMenuBarWindow(from: [fiveHour, weekly], provider: .codex), weekly)
     }
 
     func testAutomaticSelectionUsesLowestRemainingAcrossWeeklyBuckets() {
@@ -91,7 +95,7 @@ final class PopoverContentConfigurationTests: XCTestCase {
             used: 76
         )
 
-        XCTAssertEqual(configuration.selectedMenuBarWindow(from: [reserve, weekly]), reserve)
+        XCTAssertEqual(configuration.selectedMenuBarWindow(from: [reserve, weekly], provider: .codex), reserve)
     }
 
     func testHistoryDefaultIgnoresOtherWeeklyBuckets() {
@@ -131,6 +135,56 @@ final class PopoverContentConfigurationTests: XCTestCase {
         )
 
         XCTAssertEqual(configuration, .defaultValue)
+    }
+
+    func testMenuBarWindowSelectionIsStoredPerProvider() {
+        var configuration = PopoverContentConfiguration.defaultValue
+        let codexWeekly = makeWindow(id: "codex-secondary", name: "Weekly", duration: 10_080, used: 20)
+        let goWeekly = makeWindow(id: "opencode-go-weekly", name: "Weekly", duration: 10_080, used: 60)
+        let goRolling = makeWindow(id: "opencode-go-rolling", name: "5h", duration: 300, used: 5)
+
+        configuration.setMenuBarWindowID(codexWeekly.historyID, provider: .codex)
+        configuration.setMenuBarWindowID(goRolling.historyID, provider: .openCodeGo)
+
+        XCTAssertEqual(
+            configuration.selectedMenuBarWindow(from: [codexWeekly], provider: .codex),
+            codexWeekly
+        )
+        XCTAssertEqual(
+            configuration.selectedMenuBarWindow(from: [goWeekly, goRolling], provider: .openCodeGo),
+            goRolling
+        )
+        XCTAssertEqual(
+            configuration.selectedMenuBarWindow(from: [goWeekly, goRolling], provider: .openCodeGo)?.id,
+            "opencode-go-rolling"
+        )
+    }
+
+    func testMenuBarWindowSelectionCanBeClearedPerProvider() {
+        var configuration = PopoverContentConfiguration.defaultValue
+        let weekly = makeWindow(id: "opencode-go-weekly", name: "Weekly", duration: 10_080, used: 90)
+        let rolling = makeWindow(id: "opencode-go-rolling", name: "5h", duration: 300, used: 10)
+
+        configuration.setMenuBarWindowID(weekly.historyID, provider: .openCodeGo)
+        configuration.setMenuBarWindowID(nil, provider: .openCodeGo)
+
+        XCTAssertNil(configuration.menuBarWindowID(for: .openCodeGo))
+        // Automatic mode follows the most constrained window.
+        XCTAssertEqual(
+            configuration.selectedMenuBarWindow(from: [rolling, weekly], provider: .openCodeGo),
+            weekly
+        )
+    }
+
+    func testDecodingLegacyMenuBarSelectionAssignsItToCodex() throws {
+        let payload = Data(
+            #"{"hiddenSections":[],"hiddenQuotaWindowIDs":[],"menuBarQuotaWindowID":"codex-secondary","sectionOrder":["quotaWindows","resetCredits","quotaHistory","tokenActivity"]}"#.utf8
+        )
+
+        let configuration = try JSONDecoder().decode(PopoverContentConfiguration.self, from: payload)
+
+        XCTAssertEqual(configuration.menuBarWindowID(for: .codex), "codex-secondary")
+        XCTAssertNil(configuration.menuBarWindowID(for: .openCodeGo))
     }
 
     private func makeWindow(

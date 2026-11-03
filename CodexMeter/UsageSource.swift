@@ -30,4 +30,7 @@ protocol UsageSource: ObservableObject where ObjectWillChangePublisher == Observ
     func refreshIfNeeded(maxAge: TimeInterval)
     func setPopoverVisible(_ visible: Bool)
     func setNotificationsEnabled(_ enabled: Bool)
+
+    /// Marks this source as the one whose history partition the popover shows.
+    func setHistoryViewActive(_ active: Bool)
 }

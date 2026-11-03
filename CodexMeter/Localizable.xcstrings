@@ -8299,6 +8299,52 @@
           }
         }
       }
+    },
+    "settings.popover.ring_source.provider_format": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Applies to %@ · each quota source remembers its own window."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "仅作用于 %@ · 每个额度来源各自记住所选窗口。"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "僅作用於 %@ · 每個額度來源各自記住所選視窗。"
+          }
+        }
+      }
+    },
+    "settings.provider.tabs_hint": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Both quota sources refresh in the background; the tabs only choose which one the popover shows."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "两个额度来源都会在后台刷新，标签页只决定弹窗显示哪一个。"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "兩個額度來源都會在背景重新整理，標籤頁只決定彈出視窗顯示哪一個。"
+          }
+        }
+      }
     }
   },
   "version": "1.1"

@@ -33,6 +33,9 @@ struct ContentView: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 14) {
+            providerTabs
+                .layoutPriority(1)
+
             header
                 .layoutPriority(1)
 
@@ -158,6 +161,30 @@ struct ContentView: View {
         .buttonStyle(.plain)
         .font(.caption)
         .foregroundStyle(.blue)
+    }
+
+    /// Both providers poll continuously; these tabs choose which one the popover
+    /// shows. Each tab carries its own most-constrained percentage so the other
+    /// provider stays readable without switching.
+    private var providerTabs: some View {
+        Picker("", selection: Binding(
+            get: { service.provider },
+            set: { service.select($0) }
+        )) {
+            ForEach(service.providers) { provider in
+                Text(tabTitle(for: provider)).tag(provider)
+            }
+        }
+        .pickerStyle(.segmented)
+        .labelsHidden()
+        .accessibilityLabel(L10n.string("settings.provider.source"))
+    }
+
+    private func tabTitle(for provider: UsageProvider) -> String {
+        guard let remaining = service.remainingPercent(for: provider) else {
+            return provider.localizedName
+        }
+        return "\(provider.localizedName) \(remaining)%"
     }
 
     private var header: some View {

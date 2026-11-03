@@ -35,6 +35,11 @@ struct PopoverCustomizationView: View {
                     }
                 }
                 .accessibilityHint(L10n.string("settings.popover.ring_source.hint"))
+
+                Text(L10n.format("settings.popover.ring_source.provider_format", service.provider.localizedName))
+                    .font(.callout)
+                    .foregroundStyle(.secondary)
+                    .fixedSize(horizontal: false, vertical: true)
             }
 
             Section(L10n.string("settings.popover.visible_content")) {
@@ -69,10 +74,10 @@ struct PopoverCustomizationView: View {
     private var menuBarWindowSelection: Binding<String?> {
         Binding(
             get: {
-                let storedID = settings.popoverContent.menuBarQuotaWindowID
+                let storedID = settings.popoverContent.menuBarWindowID(for: service.provider)
                 return service.windows.contains { $0.historyID == storedID } ? storedID : nil
             },
-            set: { settings.setMenuBarQuotaWindowID($0) }
+            set: { settings.setMenuBarWindowID($0, provider: service.provider) }
         )
     }
 

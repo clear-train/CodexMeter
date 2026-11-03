@@ -15,7 +15,9 @@ struct PopoverContentConfiguration: Codable, Equatable, Sendable {
     var sectionOrder: [PopoverContentSection]
     var hiddenSections: Set<PopoverContentSection>
     var hiddenQuotaWindowIDs: Set<String>
-    var menuBarQuotaWindowID: String?
+    /// Menu bar window choice per provider, keyed by `UsageProvider.rawValue`.
+    /// A missing entry means automatic mode: follow the most constrained window.
+    var menuBarQuotaWindowIDs: [String: String]
 
     static let defaultValue = PopoverContentConfiguration(
         sectionOrder: PopoverContentSection.allCases,
@@ -26,19 +28,19 @@ struct PopoverContentConfiguration: Codable, Equatable, Sendable {
                 durationMins: 7 * 24 * 60
             )
         ],
-        menuBarQuotaWindowID: nil
+        menuBarQuotaWindowIDs: [:]
     )
 
     init(
         sectionOrder: [PopoverContentSection],
         hiddenSections: Set<PopoverContentSection>,
         hiddenQuotaWindowIDs: Set<String>,
-        menuBarQuotaWindowID: String?
+        menuBarQuotaWindowIDs: [String: String]
     ) {
         self.sectionOrder = sectionOrder
         self.hiddenSections = hiddenSections
         self.hiddenQuotaWindowIDs = hiddenQuotaWindowIDs
-        self.menuBarQuotaWindowID = menuBarQuotaWindowID
+        self.menuBarQuotaWindowIDs = menuBarQuotaWindowIDs
         normalize()
     }
 
@@ -78,9 +80,21 @@ struct PopoverContentConfiguration: Codable, Equatable, Sendable {
         sectionOrder.swapAt(sourceIndex, destinationIndex)
     }
 
-    func selectedMenuBarWindow(from windows: [UsageWindow]) -> UsageWindow? {
-        if let menuBarQuotaWindowID,
-           let selected = windows.first(where: { $0.historyID == menuBarQuotaWindowID }) {
+    func menuBarWindowID(for provider: UsageProvider) -> String? {
+        menuBarQuotaWindowIDs[provider.rawValue]
+    }
+
+    mutating func setMenuBarWindowID(_ id: String?, provider: UsageProvider) {
+        if let id {
+            menuBarQuotaWindowIDs[provider.rawValue] = id
+        } else {
+            menuBarQuotaWindowIDs.removeValue(forKey: provider.rawValue)
+        }
+    }
+
+    func selectedMenuBarWindow(from windows: [UsageWindow], provider: UsageProvider) -> UsageWindow? {
+        if let id = menuBarQuotaWindowIDs[provider.rawValue],
+           let selected = windows.first(where: { $0.historyID == id }) {
             return selected
         }
         return windows.min { $0.remainingPercent < $1.remainingPercent }
@@ -102,7 +116,24 @@ struct PopoverContentConfiguration: Codable, Equatable, Sendable {
         case sectionOrder
         case hiddenSections
         case hiddenQuotaWindowIDs
+        case menuBarQuotaWindowIDs
+    }
+
+    /// Key used before the menu bar choice became per-provider. It is read for
+    /// migration only and never written again.
+    private enum LegacyCodingKeys: String, CodingKey {
         case menuBarQuotaWindowID
+    }
+
+    private static func legacyMenuBarWindowID(from decoder: Decoder) -> String? {
+        guard let container = try? decoder.container(keyedBy: LegacyCodingKeys.self) else {
+            return nil
+        }
+        do {
+            return try container.decodeIfPresent(String.self, forKey: .menuBarQuotaWindowID)
+        } catch {
+            return nil
+        }
     }
 
     init(from decoder: Decoder) throws {
@@ -120,10 +151,17 @@ struct PopoverContentConfiguration: Codable, Equatable, Sendable {
             Set<String>.self,
             forKey: .hiddenQuotaWindowIDs
         ) ?? defaults.hiddenQuotaWindowIDs
-        menuBarQuotaWindowID = try container.decodeIfPresent(
-            String.self,
-            forKey: .menuBarQuotaWindowID
-        )
+        if let stored = try container.decodeIfPresent(
+            [String: String].self,
+            forKey: .menuBarQuotaWindowIDs
+        ) {
+            menuBarQuotaWindowIDs = stored
+        } else if let legacyID = Self.legacyMenuBarWindowID(from: decoder) {
+            // Pre-provider releases stored one global selection; it belonged to Codex.
+            menuBarQuotaWindowIDs = [UsageProvider.codex.rawValue: legacyID]
+        } else {
+            menuBarQuotaWindowIDs = defaults.menuBarQuotaWindowIDs
+        }
         normalize()
     }
 }

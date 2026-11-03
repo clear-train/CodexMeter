@@ -1,10 +1,11 @@
 import Combine
 import Foundation
 
-/// Presents one active quota source to the UI.
+/// Presents the quota source the popover is showing.
 ///
-/// Both sources stay alive so switching providers keeps warm state, but only the
-/// active source may own the visible history partition and refresh timer.
+/// Every provider keeps polling in the background so a tab switch is instant and
+/// history stays continuous for both. Only the viewed provider owns the visible
+/// history partition; the others keep recording under their own account key.
 @MainActor
 final class UsageCoordinator: ObservableObject {
     let codex: CodexUsageService
@@ -18,48 +19,69 @@ final class UsageCoordinator: ObservableObject {
     init(settings: AppSettings, history: UsageHistoryModel) {
         self.settings = settings
         self.provider = settings.usageProvider
-        self.codex = CodexUsageService(settings: settings, history: history, autostart: false)
-        self.openCodeGo = OpenCodeGoUsageService(settings: settings, history: history, autostart: false)
+        self.codex = CodexUsageService(settings: settings, history: history)
+        self.openCodeGo = OpenCodeGoUsageService(settings: settings, history: history)
 
         // Activate after StateObject construction completes on the main run loop.
         Task { @MainActor [weak self] in
-            self?.activateCurrentSource()
+            self?.activateSources()
         }
     }
 
-    var activeSource: UsageSource {
+    /// Providers the popover can show, in tab order.
+    var providers: [UsageProvider] { UsageProvider.allCases }
+
+    func source(for provider: UsageProvider) -> UsageSource {
         switch provider {
         case .codex: codex
         case .openCodeGo: openCodeGo
         }
     }
 
+    var activeSource: UsageSource { source(for: provider) }
+
+    func remainingPercent(for provider: UsageProvider) -> Int? {
+        source(for: provider).mostConstrainedRemainingPercent
+    }
+
+    func attentionLevel(for provider: UsageProvider) -> QuotaAttentionLevel? {
+        source(for: provider).mostConstrainedWindow?.attentionLevel(at: Date())
+    }
+
     func select(_ provider: UsageProvider) {
         guard provider != self.provider else { return }
         self.provider = provider
         settings.usageProvider = provider
-        activateCurrentSource()
+        applyHistoryViewOwnership()
+        // The other provider may not have polled since the popover opened.
+        activeSource.refreshIfNeeded(maxAge: 10)
     }
 
-    private func activateCurrentSource() {
-        if hasActivated {
-            switch provider {
-            case .codex: openCodeGo.deactivate()
-            case .openCodeGo: codex.deactivate()
-            }
-        }
+    private func activateSources() {
+        guard !hasActivated else { return }
         hasActivated = true
-        if provider == .openCodeGo {
-            openCodeGo.updateChannel(settings.openCodeGoChannel)
-        }
-        activeSource.activate()
-        rebindForwarding()
+        openCodeGo.updateChannel(settings.openCodeGoChannel)
+        // Both services autostart; the coordinator only decides who owns the
+        // visible history partition.
+        applyHistoryViewOwnership()
+        bindForwarding()
     }
 
-    /// SwiftUI must observe the coordinator, so relay the active source's change
-    /// notifications through this object.
-    private func rebindForwarding() {
-        forwarder = activeSource.objectWillChange.sink { [weak self] _ in
+    /// Exactly one source may own the visible history partition; deactivating
+    /// the outgoing one first keeps the store from briefly mixing partitions.
+    private func applyHistoryViewOwnership() {
+        for candidate in providers {
+            source(for: candidate).setHistoryViewActive(candidate == provider)
+        }
+    }
+
+    /// SwiftUI observes the coordinator only, so relay changes from *both*
+    /// providers: the inactive tab still shows a live percentage.
+    private func bindForwarding() {
+        forwarder = Publishers.Merge(
+            codex.objectWillChange,
+            openCodeGo.objectWillChange
+        ).sink { [weak self] _ in
             self?.objectWillChange.send()
         }
     }
