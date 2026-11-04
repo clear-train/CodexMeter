@@ -550,6 +550,80 @@ final class HistoryTests: XCTestCase {
         XCTAssertNil(QuotaExhaustionEstimate.calculate(samples: nonMonotonic, now: now))
     }
 
+    func testExhaustionEstimateIgnoresASingleBurstWhenFittingTheRate() {
+        let now = Date(timeIntervalSince1970: 1_800_000_000)
+        let reset = now.addingTimeInterval(12 * 60 * 60)
+        let samples = [
+            historySample(id: 1, date: now.addingTimeInterval(-60 * 60), remaining: 80, reset: reset),
+            historySample(id: 2, date: now.addingTimeInterval(-50 * 60), remaining: 79, reset: reset),
+            historySample(id: 3, date: now.addingTimeInterval(-40 * 60), remaining: 78, reset: reset),
+            historySample(id: 4, date: now.addingTimeInterval(-30 * 60), remaining: 77, reset: reset),
+            historySample(id: 5, date: now.addingTimeInterval(-20 * 60), remaining: 76, reset: reset),
+            historySample(id: 6, date: now.addingTimeInterval(-19 * 60), remaining: 68, reset: reset)
+        ]
+
+        let estimate = QuotaExhaustionEstimate.calculate(samples: samples, now: now)
+        let minutesUntilEmpty = (estimate?.exhaustedAt.timeIntervalSince(now) ?? 0) / 60
+
+        // The steady minute costs one point every ten minutes, so 68 remaining points
+        // need roughly 680 minutes. A least-squares line would be dragged by the burst
+        // toward a few hundred minutes instead.
+        XCTAssertNotNil(estimate)
+        XCTAssertEqual(minutesUntilEmpty, 680, accuracy: 80)
+        XCTAssertEqual(estimate?.activeFraction ?? 0, 1, accuracy: 0.01)
+    }
+
+    func testExhaustionEstimateReportsARangeForIrregularUsage() {
+        let now = Date(timeIntervalSince1970: 1_800_000_000)
+        let reset = now.addingTimeInterval(24 * 60 * 60)
+        let samples = [
+            historySample(id: 1, date: now.addingTimeInterval(-90 * 60), remaining: 70, reset: reset),
+            historySample(id: 2, date: now.addingTimeInterval(-70 * 60), remaining: 68, reset: reset),
+            historySample(id: 3, date: now.addingTimeInterval(-40 * 60), remaining: 63, reset: reset),
+            historySample(id: 4, date: now.addingTimeInterval(-30 * 60), remaining: 62, reset: reset),
+            historySample(id: 5, date: now.addingTimeInterval(-10 * 60), remaining: 57, reset: reset),
+            historySample(id: 6, date: now, remaining: 57, reset: reset)
+        ]
+
+        let estimate = QuotaExhaustionEstimate.calculate(samples: samples, now: now)
+        let unwrapped = try? XCTUnwrap(estimate)
+
+        XCTAssertNotNil(unwrapped)
+        if let unwrapped {
+            XCTAssertLessThan(unwrapped.earliestExhaustedAt, unwrapped.latestExhaustedAt)
+            XCTAssertLessThanOrEqual(unwrapped.earliestExhaustedAt, unwrapped.exhaustedAt)
+            XCTAssertLessThanOrEqual(unwrapped.exhaustedAt, unwrapped.latestExhaustedAt)
+            XCTAssertLessThan(unwrapped.activeFraction, 1)
+        }
+    }
+
+    func testExhaustionEstimateSkipsIdleOnlySamples() {
+        let now = Date(timeIntervalSince1970: 1_800_000_000)
+        let reset = now.addingTimeInterval(6 * 60 * 60)
+        let samples = (0..<4).map { index in
+            historySample(
+                id: Int64(index + 1),
+                date: now.addingTimeInterval(TimeInterval(-index) * 15 * 60),
+                remaining: 40,
+                reset: reset
+            )
+        }
+
+        XCTAssertNil(QuotaExhaustionEstimate.calculate(samples: samples, now: now))
+    }
+
+    func testExhaustionEstimateIsSuppressedPastTheOfficialReset() {
+        let now = Date(timeIntervalSince1970: 1_800_000_000)
+        let soon = now.addingTimeInterval(5 * 60)
+        let samples = [
+            historySample(id: 1, date: now.addingTimeInterval(-30 * 60), remaining: 60, reset: soon),
+            historySample(id: 2, date: now.addingTimeInterval(-15 * 60), remaining: 55, reset: soon),
+            historySample(id: 3, date: now, remaining: 50, reset: soon)
+        ]
+
+        XCTAssertNil(QuotaExhaustionEstimate.calculate(samples: samples, now: now))
+    }
+
     func testSemanticVersionComparisonHandlesPrereleases() throws {
         let v119 = try XCTUnwrap(SemanticVersion("1.1.9"))
         let v120Beta = try XCTUnwrap(SemanticVersion("v1.2.0-beta.2"))

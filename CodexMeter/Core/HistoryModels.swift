@@ -968,16 +968,37 @@ enum CompactTokenFormatter {
 struct QuotaExhaustionEstimate: Equatable, Sendable {
     let exhaustedAt: Date
     let calculatedAt: Date
+    /// Fastest-consumption bound; never earlier than the calculation moment.
+    let earliestExhaustedAt: Date
+    /// Slowest-consumption bound; never later than the official reset when known.
+    let latestExhaustedAt: Date
+    /// Share of the observed span that actually spent quota, `0...1`.
+    let activeFraction: Double
 
-    /// Produces a conservative linear estimate only within one reliable reset segment.
+    /// Estimates when the window reaches zero from the current consumption rate.
+    ///
+    /// Quota does not burn at a constant rate, so a least-squares fit over wall
+    /// clock time is led by whichever burst happens to be largest. This measures
+    /// consumption per active minute (intervals that spent nothing add no time),
+    /// fits it with Theil-Sen, the median of pairwise slopes, which one burst
+    /// cannot drag the way it drags a mean, and then converts active minutes back
+    /// into wall time using the share of the span that was actually active.
+    /// Recent pairs weigh more than old ones so yesterday's heavy session does not
+    /// describe today. The result carries a range because integer percentages and
+    /// bursty use leave real slack in any fit.
     static func calculate(
         samples: [QuotaHistorySample],
         now: Date,
-        minimumSpan: TimeInterval = 15 * 60
+        minimumSpan: TimeInterval = 15 * 60,
+        halfLife: TimeInterval = 45 * 60,
+        maximumSamples: Int = 240
     ) -> QuotaExhaustionEstimate? {
-        let ordered = QuotaCycleDetection.segments(samples
+        let segment = QuotaCycleDetection.segments(samples
             .filter { !$0.isStale && $0.sampledAt <= now }
         ).last ?? []
+        // Pairwise slopes are quadratic in the sample count, so keep the newest
+        // slice of a long cycle; older points weigh little anyway.
+        let ordered = Array(segment.suffix(maximumSamples))
 
         guard ordered.count >= 3,
               let first = ordered.first,
@@ -1000,32 +1021,112 @@ struct QuotaExhaustionEstimate: Equatable, Sendable {
 
         guard first.remainingPercent - last.remainingPercent >= 2 else { return nil }
 
-        let origin = first.sampledAt.timeIntervalSinceReferenceDate
-        let points = ordered.map {
-            (
-                x: $0.sampledAt.timeIntervalSinceReferenceDate - origin,
-                y: Double($0.remainingPercent)
-            )
+        let spanSeconds = last.sampledAt.timeIntervalSince(first.sampledAt)
+        var activeSeconds: Double = 0
+        var points = [ConsumptionPoint(activeSeconds: 0, consumed: 0, age: spanSeconds)]
+        var previous = first
+        for sample in ordered.dropFirst() {
+            let elapsed = sample.sampledAt.timeIntervalSince(previous.sampledAt)
+            let consumed = previous.remainingPercent - sample.remainingPercent
+            // Idle intervals contribute no active time, so a pause cannot dilute
+            // the rate of the burst that preceded it.
+            if consumed > 0 {
+                activeSeconds += elapsed
+            }
+            points.append(ConsumptionPoint(
+                activeSeconds: activeSeconds,
+                consumed: Double(first.remainingPercent - sample.remainingPercent),
+                age: last.sampledAt.timeIntervalSince(sample.sampledAt)
+            ))
+            previous = sample
         }
-        let meanX = points.map(\.x).reduce(0, +) / Double(points.count)
-        let meanY = points.map(\.y).reduce(0, +) / Double(points.count)
-        let numerator = points.reduce(0) { $0 + ($1.x - meanX) * ($1.y - meanY) }
-        let denominator = points.reduce(0) { $0 + pow($1.x - meanX, 2) }
 
-        guard denominator > 0 else { return nil }
-        let slope = numerator / denominator
-        guard slope < 0 else { return nil }
+        guard activeSeconds > 0 else { return nil }
+        let activeFraction = min(1, activeSeconds / spanSeconds)
+        guard activeFraction > 0 else { return nil }
 
-        let secondsUntilEmpty = Double(last.remainingPercent) / -slope
-        let exhaustedAt = last.sampledAt.addingTimeInterval(secondsUntilEmpty)
-        guard exhaustedAt > now else { return nil }
+        var pairs: [(value: Double, weight: Double)] = []
+        pairs.reserveCapacity(points.count * (points.count - 1) / 2)
+        for index in points.indices {
+            for later in points.index(after: index)..<points.count {
+                let deltaActive = points[later].activeSeconds - points[index].activeSeconds
+                let deltaConsumed = points[later].consumed - points[index].consumed
+                guard deltaActive > 0, deltaConsumed > 0 else { continue }
+                // Both endpoints must be recent; one stale endpoint should not make
+                // an otherwise stale pair look fresh.
+                let weight = min(
+                    recencyWeight(age: points[index].age, halfLife: halfLife),
+                    recencyWeight(age: points[later].age, halfLife: halfLife)
+                )
+                pairs.append((deltaConsumed / deltaActive, weight))
+            }
+        }
+        guard !pairs.isEmpty else { return nil }
+
+        guard let medianSlope = weightedQuantile(pairs, 0.5),
+              let fastSlope = weightedQuantile(pairs, 0.75),
+              let slowSlope = weightedQuantile(pairs, 0.25) else {
+            return nil
+        }
+
+        func projectedDate(slope: Double) -> Date? {
+            guard slope > 0 else { return nil }
+            let wallSecondsUntilEmpty = Double(last.remainingPercent) / slope / activeFraction
+            guard wallSecondsUntilEmpty.isFinite else { return nil }
+            return last.sampledAt.addingTimeInterval(wallSecondsUntilEmpty)
+        }
+
+        guard let exhaustedAt = projectedDate(slope: medianSlope), exhaustedAt > now else {
+            return nil
+        }
 
         // The official reset remains authoritative; an estimate after it has no useful meaning.
         if let resetsAt = last.resetsAt, exhaustedAt >= resetsAt {
             return nil
         }
 
-        return QuotaExhaustionEstimate(exhaustedAt: exhaustedAt, calculatedAt: now)
+        let earliest = max(now, projectedDate(slope: fastSlope) ?? exhaustedAt)
+        var latest = max(exhaustedAt, projectedDate(slope: slowSlope) ?? exhaustedAt)
+        if let resetsAt = last.resetsAt {
+            latest = min(latest, resetsAt)
+        }
+        guard latest >= earliest else { return nil }
+
+        return QuotaExhaustionEstimate(
+            exhaustedAt: exhaustedAt,
+            calculatedAt: now,
+            earliestExhaustedAt: earliest,
+            latestExhaustedAt: latest,
+            activeFraction: activeFraction
+        )
+    }
+
+    private struct ConsumptionPoint {
+        let activeSeconds: Double
+        let consumed: Double
+        let age: Double
+    }
+
+    private static func recencyWeight(age: TimeInterval, halfLife: TimeInterval) -> Double {
+        guard halfLife > 0 else { return 1 }
+        return pow(0.5, max(0, age) / halfLife)
+    }
+
+    private static func weightedQuantile(
+        _ pairs: [(value: Double, weight: Double)],
+        _ quantile: Double
+    ) -> Double? {
+        let sorted = pairs.filter { $0.weight > 0 }.sorted { $0.value < $1.value }
+        guard !sorted.isEmpty else { return nil }
+        let total = sorted.reduce(0) { $0 + $1.weight }
+        guard total > 0 else { return nil }
+        let target = total * min(1, max(0, quantile))
+        var running = 0.0
+        for pair in sorted {
+            running += pair.weight
+            if running >= target { return pair.value }
+        }
+        return sorted[sorted.count - 1].value
     }
 }
 

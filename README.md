@@ -68,6 +68,10 @@ charts, and history, OpenCode Go limits.
   OpenAI guarantee.
 - Compares remaining quota with remaining time to indicate whether consumption
   is on pace.
+- Estimates when a window will run dry once enough recent samples exist. The
+  projection is paced by active usage time and median-based so one burst cannot
+  define the trend, and it reports a range with a "follows active usage time"
+  hint when the account has been idle for much of the sampled span.
 - Refreshes quota on launch, every 10 seconds while the menu is open, every
   60 seconds in the background, after a Codex rate-limit update, and on manual
   request. Account checks and Token Activity polling stay at

@@ -269,16 +269,41 @@ struct UsageHistoryView: View {
     @ViewBuilder
     private func estimateView(samples: [QuotaHistorySample]) -> some View {
         if let estimate = QuotaExhaustionEstimate.calculate(samples: samples, now: Date()) {
-            Label(
-                L10n.format(
-                    "history.estimate.format",
-                    L10n.formattedDateTime(estimate.exhaustedAt),
-                    L10n.formattedTime(estimate.calculatedAt)
-                ),
-                systemImage: "waveform.path.ecg"
-            )
-            .font(.caption)
-            .foregroundStyle(.orange)
+            VStack(alignment: .leading, spacing: 2) {
+                Label(
+                    L10n.format(
+                        "history.estimate.format",
+                        L10n.formattedDateTime(estimate.exhaustedAt),
+                        L10n.formattedTime(estimate.calculatedAt)
+                    ),
+                    systemImage: "waveform.path.ecg"
+                )
+                .font(.caption)
+                .foregroundStyle(.orange)
+
+                if estimate.latestExhaustedAt.timeIntervalSince(estimate.earliestExhaustedAt) >= 5 * 60 {
+                    Text(
+                        L10n.format(
+                            "history.estimate.range_format",
+                            L10n.formattedDateTime(estimate.earliestExhaustedAt),
+                            L10n.formattedDateTime(estimate.latestExhaustedAt)
+                        )
+                    )
+                    .font(.caption2)
+                    .foregroundStyle(.secondary)
+                }
+
+                if estimate.activeFraction < 0.6 {
+                    Text(
+                        L10n.format(
+                            "history.estimate.active_format",
+                            "\(Int((estimate.activeFraction * 100).rounded()))%"
+                        )
+                    )
+                    .font(.caption2)
+                    .foregroundStyle(.secondary)
+                }
+            }
         } else {
             Label(L10n.string("history.estimate.unavailable"), systemImage: "info.circle")
                 .font(.caption)

@@ -300,6 +300,14 @@ Codex App Server.
 - Only show a quota-exhaustion estimate for at least three monotonic samples in
   one continuous segment spanning at least 15 minutes and changing by at least
   two percentage points. Suppress estimates at or beyond the official reset.
+  Fit the rate per active minute, not per wall-clock minute: intervals that spent
+  no quota add no elapsed time, so a pause cannot pass for steady use. Use
+  Theil-Sen (the median of pairwise slopes) instead of least squares so one burst
+  cannot define the trend, weight recent pairs with a 45-minute half-life, convert
+  active minutes back to wall time with the observed active share, and cap the
+  pairwise work to the newest 240 samples of a cycle. Present the median as the
+  headline and add the fast/slow bounds once they differ by five minutes or more;
+  when the active share is low, say that the estimate follows active usage time.
 - Partition quota samples, token buckets, summaries, history views, developer
   fixtures, and CSV exports by a local account key. For ChatGPT accounts, derive
   that key from normalized account type and email using SHA-256 plus a random
@@ -500,7 +508,11 @@ Codex App Server.
 - [x] Add an optional quota-exhaustion estimate only after enough recent samples
   exist to support a meaningful trend. Label it as an estimate, show when it was
   calculated, suppress it for sparse, stale, reset-crossing, or non-monotonic
-  data, and never replace the official reset time with a prediction.
+  data, and never replace the official reset time with a prediction. The rate is
+  now fitted against active usage time with a recency-weighted Theil-Sen slope
+  and reported as a range, because quota burns in bursts rather than evenly.
+  Later work: an hour-of-week profile that projects exhaustion from the account's
+  own weekly rhythm instead of a single rate.
 - [x] Handle `account/usage/read` as optional account-dependent data.
   `dailyUsageBuckets` and summary fields may be absent, and API-key-only or
   Bedrock authentication may not support this endpoint. Show an unavailable

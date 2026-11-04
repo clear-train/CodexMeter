@@ -3848,6 +3848,29 @@
         }
       }
     },
+    "history.estimate.active_format": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Paced by active usage time (%@ active)"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "按实际使用时间推算（活跃占比 %@）"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "按實際使用時間推算（活躍佔比 %@）"
+          }
+        }
+      }
+    },
     "history.estimate.format": {
       "extractionState": "stale",
       "localizations": {
@@ -3867,6 +3890,29 @@
           "stringUnit": {
             "state": "translated",
             "value": "預計耗盡：%@ · 計算於 %@"
+          }
+        }
+      }
+    },
+    "history.estimate.range_format": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Rough range: %@ – %@"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "大致区间：%@ – %@"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "大致區間：%@ – %@"
           }
         }
       }
