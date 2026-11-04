@@ -223,6 +223,12 @@ final class AppSettings: ObservableObject {
         didSet { defaults.set(openCodeGoChannel.rawValue, forKey: Keys.openCodeGoChannel) }
     }
 
+    /// Opt-in: fetch the community reset estimate from codexreset.vercel.app.
+    /// Off by default because it is the only feature that contacts a third party.
+    @Published var resetForecastEnabled: Bool {
+        didSet { defaults.set(resetForecastEnabled, forKey: Keys.resetForecastEnabled) }
+    }
+
     @Published var notificationsEnabled: Bool {
         didSet { defaults.set(notificationsEnabled, forKey: Keys.notificationsEnabled) }
     }
@@ -360,6 +366,7 @@ final class AppSettings: ObservableObject {
         /// Pre-account release stored a single provider here.
         static let legacyUsageProvider = "usage.provider"
         static let openCodeGoChannel = "usage.openCodeGo.channel"
+        static let resetForecastEnabled = "network.resetForecast.enabled"
         static let notificationsEnabled = "notificationsEnabled"
         static let notificationThreshold = "notificationThreshold"
         static let barkEnabled = "push.barkEnabled"
@@ -440,6 +447,7 @@ final class AppSettings: ObservableObject {
         openCodeGoChannel = OpenCodeGoChannel(
             rawValue: defaults.string(forKey: Keys.openCodeGoChannel) ?? ""
         ) ?? .cli
+        resetForecastEnabled = defaults.bool(forKey: Keys.resetForecastEnabled)
         notificationsEnabled = defaults.bool(forKey: Keys.notificationsEnabled)
         let storedThreshold = defaults.integer(forKey: Keys.notificationThreshold)
         notificationThreshold = storedThreshold == 0 ? 20 : storedThreshold

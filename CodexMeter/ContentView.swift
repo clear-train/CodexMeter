@@ -288,6 +288,8 @@ struct ContentView: View {
                 return !visibleQuotaWindows.isEmpty
             case .resetCredits:
                 return service.rateLimitResetCredits != nil
+            case .resetForecast:
+                return settings.resetForecastEnabled
             case .quotaHistory:
                 return true
             case .tokenActivity:
@@ -326,6 +328,13 @@ struct ContentView: View {
                 menuQuotaSection
             }
             .buttonStyle(.plain)
+        case .resetForecast:
+            ResetForecastSection(
+                forecast: service.resetForecast.forecast,
+                isLoading: service.resetForecast.isLoading,
+                errorMessage: service.resetForecast.errorMessage,
+                onOpenSource: openResetForecastPage
+            )
         case .tokenActivity:
             Button(action: openHistoryWindow) {
                 menuTokenSection
@@ -469,6 +478,10 @@ struct ContentView: View {
     private func openHistoryWindow() {
         openWindow(id: CodexMeterWindowID.history)
         NSApplication.shared.activate(ignoringOtherApps: true)
+    }
+
+    private func openResetForecastPage() {
+        NSWorkspace.shared.open(ResetForecastClient.pageURL)
     }
 
     private var menuTokenPoints: [TokenChartPoint] {

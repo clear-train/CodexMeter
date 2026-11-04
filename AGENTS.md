@@ -136,6 +136,14 @@ has changed.
   `CodexUsageService` and records quota history under the OpenCode workspace key.
   Token activity and banked resets stay unavailable for providers that do not
   supply them; never fabricate either.
+- `Core/ResetForecastModels.swift`, `Core/ResetForecastClient.swift`,
+  `ResetForecastService.swift`, and `ResetForecastSection.swift` implement the
+  opt-in community reset estimate. It is the only outbound third-party request in
+  the app: no idle timer, at most one anonymous `GET` per hour, triggered only by
+  opening the popover or a manual refresh, and redirects are refused. The UI must
+  keep the "community estimate, not an OpenAI guarantee" wording in every state
+  and hide the section when a fetch fails instead of showing a stale number as
+  current.
 - `Core/RateLimitResetCredits.swift` decodes optional banked-reset summaries and
   detail rows from the rate-limit response. Missing or `null` summaries mean
   unavailable information rather than a confirmed zero balance.
@@ -559,6 +567,12 @@ Codex App Server.
   pace".
 
 ### Candidate follow-ups
+
+- [x] Add the opt-in community reset estimate: an hourly-throttled anonymous read
+  of `codexreset.vercel.app/api/status`, a popover section with the probability,
+  last/next expected reset and the tracker's signals, an off-by-default setting,
+  and a permanent "estimate, not a guarantee" label. Later work: combine it with
+  the exhaustion forecast to recommend when to spend a banked reset.
 
 - [x] Add independent Bark, Gotify, Telegram, and Discord quota-replenishment
   notification channels; secure credentials, accurate partial recovery text,

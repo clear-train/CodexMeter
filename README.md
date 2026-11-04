@@ -62,6 +62,10 @@ charts, and history, OpenCode Go limits.
 - Watches several Codex logins side by side. Each Codex account is one
   `CODEX_HOME` folder, added from Settings, with its own quota, its own menu bar
   ring choice, and its own history partition.
+- Optionally shows the community's daily Codex reset estimate: the probability
+  of a reset today, the last and next expected reset, and the signals behind the
+  number. The section is opt-in and always labelled as an estimate, never as an
+  OpenAI guarantee.
 - Compares remaining quota with remaining time to indicate whether consumption
   is on pace.
 - Refreshes quota on launch, every 10 seconds while the menu is open, every
@@ -214,6 +218,23 @@ process, but leaves its recorded history and the folder itself untouched. The
 default `~/.codex` account and OpenCode Go cannot be removed, so the app always
 has something to show.
 
+### Reset estimate (optional)
+
+Codex resets are announced by the team and tracked by the community. When
+**Settings → General → Reset estimate** is enabled, the popover adds a compact
+section with the probability of a reset today, the last and next expected reset,
+and the signals the tracker used (baseline interval, cooldown, announcement,
+sleep window).
+
+The data comes from [codexreset.vercel.app](https://codexreset.vercel.app), a
+community project that is not affiliated with OpenAI. CodexMeter sends a plain
+anonymous `GET` to its public JSON endpoint, at most once an hour, only when the
+popover opens or you ask for a refresh. No account, quota, credential, or
+history data is included, and redirects are refused so the request cannot move
+to another origin. The section keeps the wording "community estimate, not an
+OpenAI guarantee" in every state, hides itself when the fetch fails, and never
+blocks quota refreshes.
+
 ## Requirements
 
 - macOS 13 or later.
@@ -364,6 +385,10 @@ verification checklist, and planned developer customization options.
   locally from the account type and normalized email. Neither the email nor
   this internal key is included in CSV exports.
 - It does not add its own analytics or tracking.
+- The optional reset estimate is the only feature that contacts a third party.
+  It is off by default; when enabled it sends an anonymous `GET` to
+  `codexreset.vercel.app` at most once an hour while the popover is open, with no
+  account, quota, or credential data, and refuses redirects.
 - Remote notification channels are disabled by default. When enabled, the
   configured service receives the quota-window name and observed remaining
   percentage, but no account email, authentication data, or token history.
@@ -398,7 +423,8 @@ Menu Bar & Popover, Notifications, History & Backup, and Developer, followed by 
 **General → Accounts** lists every watched account, adds a Codex login by
 choosing its `CODEX_HOME`, and removes extra ones. **General → Quota source**
 picks the tab shown first and, for OpenCode Go, the connection between the
-official CLI and the direct API. **Menu Bar & Popover → Ring source** chooses the
+official CLI and the direct API. **General → Reset estimate** opts into the
+third-party reset probability described above. **Menu Bar & Popover → Ring source** chooses the
 quota window drawn in the menu bar; the choice is remembered per account, and
 every account keeps refreshing while one is shown.
 Existing preferences are preserved. About/update information opens in the same
@@ -477,6 +503,9 @@ Backups larger than 512 MiB are currently unsupported.
   expose. Per-model Go budgets, extra-usage spending, and token activity are not
   shown yet, and the OpenCode endpoints behind `experimental.usage.limits` may
   change between CLI releases.
+- The reset estimate is a community prediction built from public resets and
+  announcements. It can be wrong, its undocumented endpoint may change or
+  disappear, and it is never treated as an OpenAI commitment.
 
 ## Contributing
 

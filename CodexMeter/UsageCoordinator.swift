@@ -9,6 +9,9 @@ import Foundation
 @MainActor
 final class UsageCoordinator: ObservableObject {
     let openCodeGo: OpenCodeGoUsageService
+    /// Opt-in community reset estimate; it refreshes only when the popover opens
+    /// or the user asks for a refresh, never on an idle timer.
+    let resetForecast = ResetForecastService()
 
     @Published private(set) var accounts: [StoredQuotaAccount]
     @Published private(set) var accountID: String
@@ -17,6 +20,8 @@ final class UsageCoordinator: ObservableObject {
     private let history: UsageHistoryModel
     private var codexServices: [String: CodexUsageService]
     private var forwarders: [String: AnyCancellable] = [:]
+    private var observations: Set<AnyCancellable> = []
+    private var isForecastForwarded = false
     private var hasActivated = false
 
     init(settings: AppSettings, history: UsageHistoryModel) {
@@ -38,6 +43,10 @@ final class UsageCoordinator: ObservableObject {
             )
         }
         self.codexServices = services
+        self.resetForecast.setEnabled(settings.resetForecastEnabled)
+        settings.$resetForecastEnabled
+            .sink { [weak self] enabled in self?.resetForecast.setEnabled(enabled) }
+            .store(in: &observations)
 
         // Activate after StateObject construction completes on the main run loop.
         Task { @MainActor [weak self] in
@@ -174,6 +183,12 @@ final class UsageCoordinator: ObservableObject {
                 self?.objectWillChange.send()
             }
         }
+        if !isForecastForwarded {
+            isForecastForwarded = true
+            resetForecast.objectWillChange.sink { [weak self] _ in
+                self?.objectWillChange.send()
+            }.store(in: &observations)
+        }
     }
 
     // MARK: - Forwarded surface
@@ -217,7 +232,10 @@ final class UsageCoordinator: ObservableObject {
         return activeAccount.displayName
     }
 
-    func refresh() { activeSource.refresh() }
+    func refresh() {
+        activeSource.refresh()
+        resetForecast.noteActivity()
+    }
 
     func refreshIfNeeded(maxAge: TimeInterval = 10) {
         activeSource.refreshIfNeeded(maxAge: maxAge)
@@ -226,6 +244,9 @@ final class UsageCoordinator: ObservableObject {
     func setPopoverVisible(_ visible: Bool) {
         for account in accounts {
             source(for: account.id)?.setPopoverVisible(visible)
+        }
+        if visible {
+            resetForecast.noteActivity()
         }
     }
 

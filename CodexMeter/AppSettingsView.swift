@@ -113,6 +113,13 @@ struct AppSettingsView: View {
                     }
                 }
             }
+            Section(L10n.string("settings.reset_forecast.section")) {
+                Toggle(L10n.string("settings.reset_forecast.toggle"), isOn: $settings.resetForecastEnabled)
+                Text(L10n.string("settings.reset_forecast.help"))
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
             Section {
                 Picker(L10n.string("settings.language"), selection: Binding(
                     get: { settings.language },

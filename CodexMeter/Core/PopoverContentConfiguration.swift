@@ -3,6 +3,7 @@ import Foundation
 enum PopoverContentSection: String, CaseIterable, Codable, Identifiable, Sendable {
     case quotaWindows
     case resetCredits
+    case resetForecast
     case quotaHistory
     case tokenActivity
 
