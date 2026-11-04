@@ -152,18 +152,29 @@ has changed.
   nor trigger a fetch. The UI must keep the "community estimate, not an OpenAI
   guarantee" wording in every state and hide the section when a fetch fails
   instead of showing a stale number as current. The tracker's signal names are
-  opaque, so the signals row carries a question-mark help icon whose tooltip
-  explains that the percentage is the sum of the signals and what each one
-  measures; keep that explanation in every supported language.
+  opaque, so the signals row carries a question-mark help button that expands an
+  inline panel explaining that the percentage is the sum of the signals and what
+  each one measures. A tooltip is attached too, but tooltips are not reliably
+  delivered inside a menu bar popover, so the click path is the primary one.
+  Keep that explanation in every supported language.
 - `Core/RateLimitResetCredits.swift` decodes optional banked-reset summaries and
   detail rows from the rate-limit response. Missing or `null` summaries mean
   unavailable information rather than a confirmed zero balance.
+- `Core/ResetStrategy.swift` defines the two ways the app reads a scheduled
+  refill: `bridge` keeps quota until the official reset and spends a credit only
+  when a window cannot last, `maximize` treats unused quota as wasted and refills
+  as soon as a window is dry. It persists in `usage.resetStrategy` and defaults
+  to `bridge`.
 - `Core/ResetCreditAdvisor.swift` turns banked resets, the active-time exhaustion
   estimate, and the community reset estimate into the one-line suggestion shown
-  with the banked resets. Keep its rule order: spend now when a window is
-  projected to run out before its own reset, hold when a likely automatic reset
-  is expected before the credit expires, spend before the deadline when the
-  credit expires soon and quota is already above the ideal pace, otherwise hold.
+  with the banked resets. It takes the selected `ResetStrategy`. For `bridge`
+  keep its rule order: spend now when a window is projected to run out before
+  its own reset, hold when a likely automatic reset is expected before the credit
+  expires, spend before the deadline when the credit expires soon and quota is
+  already above the ideal pace, otherwise hold. For `maximize`: refill when a
+  window has five percent or less left (`useAtFloor`), then the same projected
+  exhaustion rule, then spend a credit that expires within the warning window
+  while some block still has at least thirty percent of its quota to burn.
   Keep the thresholds as default arguments (6 hours of risk, 60% probability, a
   48-hour expiry warning), keep the advice read-only so it never spends a reset,
   and return nothing when no usable credit exists.

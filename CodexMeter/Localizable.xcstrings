@@ -6376,6 +6376,29 @@
         }
       }
     },
+    "reset_credits.advice.floor_format": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Use a reset now: %@ has run dry, so the credit keeps the work going."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@ 已经见底，现在用一张重置券就能接着用。"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@ 已經見底，現在用一張重置券就能接著用。"
+          }
+        }
+      },
+      "extractionState": "manual"
+    },
     "reset_credits.advice.hold": {
       "extractionState": "manual",
       "localizations": {
@@ -6398,6 +6421,29 @@
           }
         }
       }
+    },
+    "reset_credits.advice.hold_maximize": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Not yet: burn the quota you already have before spending a credit."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "先不急：把现有额度用到见底再用券更划算。"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "先不急：把現有額度用到見底再用券更划算。"
+          }
+        }
+      },
+      "extractionState": "manual"
     },
     "reset_credits.advice.use_now_format": {
       "extractionState": "manual",
@@ -8698,6 +8744,98 @@
           }
         }
       }
+    },
+    "settings.reset_strategy.bridge": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Reach the reset"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "撑到重置"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "撐到重置"
+          }
+        }
+      },
+      "extractionState": "manual"
+    },
+    "settings.reset_strategy.help": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Reach the reset keeps quota for the official refill and spends a banked reset only when the current window cannot last. Use it all refills as soon as a window runs dry so work continues, and never lets a credit expire unused."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "「撑到重置」把额度留到官方自动重置，只有当前窗口真的撑不住时才动用重置券；「尽量用完」则在窗口见底时立刻用券接着用，尽量不让券过期作废。"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "「撐到重置」把額度留到官方自動重置，只有目前視窗真的撐不住時才動用重置券；「盡量用完」則在視窗見底時立刻用券接著用，盡量不讓券過期作廢。"
+          }
+        }
+      },
+      "extractionState": "manual"
+    },
+    "settings.reset_strategy.maximize": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Use it all"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "尽量用完"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "盡量用完"
+          }
+        }
+      },
+      "extractionState": "manual"
+    },
+    "settings.reset_strategy.section": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Reset strategy"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "重置策略"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "重置策略"
+          }
+        }
+      },
+      "extractionState": "manual"
     },
     "settings.style.bar_below": {
       "extractionState": "stale",

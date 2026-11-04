@@ -113,6 +113,20 @@ struct AppSettingsView: View {
                     }
                 }
             }
+            Section(L10n.string("settings.reset_strategy.section")) {
+                Picker(L10n.string("settings.reset_strategy.section"), selection: $settings.resetStrategy) {
+                    ForEach(ResetStrategy.allCases) { strategy in
+                        Text(strategy.localizedName).tag(strategy)
+                    }
+                }
+                .pickerStyle(.segmented)
+                .labelsHidden()
+
+                Text(L10n.string("settings.reset_strategy.help"))
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
             Section(L10n.string("settings.reset_forecast.section")) {
                 Toggle(L10n.string("settings.reset_forecast.toggle"), isOn: $settings.resetForecastEnabled)
                 Text(L10n.string("settings.reset_forecast.help"))

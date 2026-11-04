@@ -52,7 +52,9 @@ charts, and history, OpenCode Go limits.
 - Shows available banked Codex rate-limit resets as one compact lifetime
   progress bar and expiration time per reset. A one-line suggestion explains
   whether to spend one now, wait for an expected automatic reset, or use it
-  before it expires. This view is read-only and cannot redeem a reset.
+  before it expires, and it follows the reset strategy you pick: **reach the
+  reset** saves quota for the official refill, **use it all** refills as soon as
+  a window runs dry. This view is read-only and cannot redeem a reset.
 - Supports OpenCode Go as a second quota source. It shows the 5-hour, weekly,
   and monthly Go meters with the same rings, pace hints, reset countdowns, and
   quota history, and keeps OpenCode's history in its own local partition.
@@ -224,6 +226,17 @@ cannot answer. Removing an extra account drops its tab and stops its child
 process, but leaves its recorded history and the folder itself untouched. The
 default `~/.codex` account and OpenCode Go cannot be removed, so the app always
 has something to show.
+
+### Reset strategy
+
+Two habits conflict when a plan refills on a schedule. **Reach the reset**
+(**Settings → General → Reset strategy**) keeps the current quota until the
+official reset refills it and spends a banked reset only when a window is
+projected to run out first. **Use it all** treats unused quota as wasted: it
+suggests refilling as soon as a window is dry, and it spends a credit that is
+about to expire while capacity still exists to consume it. The advice line with
+the banked resets follows the selected strategy; nothing else changes, and the
+app never redeems a reset by itself.
 
 ### Reset estimate (optional)
 

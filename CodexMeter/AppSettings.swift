@@ -160,6 +160,15 @@ extension OpenCodeGoChannel {
     }
 }
 
+extension ResetStrategy {
+    var localizedName: String {
+        switch self {
+        case .bridge: L10n.string("settings.reset_strategy.bridge")
+        case .maximize: L10n.string("settings.reset_strategy.maximize")
+        }
+    }
+}
+
 extension PopoverContentSection {
     var localizedName: String {
         L10n.string("settings.popover.section.\(rawValue)")
@@ -225,6 +234,10 @@ final class AppSettings: ObservableObject {
 
     /// Opt-in: fetch the community reset estimate from pingreset.com.
     /// Off by default because it is the only feature that contacts a third party.
+    @Published var resetStrategy: ResetStrategy {
+        didSet { defaults.set(resetStrategy.rawValue, forKey: Keys.resetStrategy) }
+    }
+
     @Published var resetForecastEnabled: Bool {
         didSet { defaults.set(resetForecastEnabled, forKey: Keys.resetForecastEnabled) }
     }
@@ -367,6 +380,7 @@ final class AppSettings: ObservableObject {
         static let legacyUsageProvider = "usage.provider"
         static let openCodeGoChannel = "usage.openCodeGo.channel"
         static let resetForecastEnabled = "network.resetForecast.enabled"
+        static let resetStrategy = "usage.resetStrategy"
         static let notificationsEnabled = "notificationsEnabled"
         static let notificationThreshold = "notificationThreshold"
         static let barkEnabled = "push.barkEnabled"
@@ -448,6 +462,8 @@ final class AppSettings: ObservableObject {
             rawValue: defaults.string(forKey: Keys.openCodeGoChannel) ?? ""
         ) ?? .cli
         resetForecastEnabled = defaults.bool(forKey: Keys.resetForecastEnabled)
+        resetStrategy = defaults.string(forKey: Keys.resetStrategy)
+            .flatMap(ResetStrategy.init(rawValue:)) ?? .bridge
         notificationsEnabled = defaults.bool(forKey: Keys.notificationsEnabled)
         let storedThreshold = defaults.integer(forKey: Keys.notificationThreshold)
         notificationThreshold = storedThreshold == 0 ? 20 : storedThreshold

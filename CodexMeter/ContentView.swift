@@ -323,6 +323,7 @@ struct ContentView: View {
                     windows: service.windows,
                     samples: history.quotaSamples,
                     forecast: service.resetForecast.forecast,
+                    strategy: settings.resetStrategy,
                     appearance: settings.developerAppearance
                 )
             }
@@ -636,6 +637,7 @@ private struct ResetCreditsSection: View {
     let windows: [UsageWindow]
     let samples: [QuotaHistorySample]
     let forecast: ResetForecast?
+    let strategy: ResetStrategy
     let appearance: MenuBarAppearance
     @Environment(\.colorScheme) private var colorScheme
 
@@ -690,7 +692,8 @@ private struct ResetCreditsSection: View {
             samples: samples,
             summary: summary,
             forecast: forecast,
-            now: date
+            now: date,
+            strategy: strategy
         )
     }
 
@@ -702,6 +705,11 @@ private struct ResetCreditsSection: View {
                 "reset_credits.advice.use_now_format",
                 advice.windowName ?? L10n.string("reset_credits.title"),
                 advice.exhaustionAt.map(L10n.formattedDateTime) ?? "-"
+            )
+        case .useAtFloor:
+            return L10n.format(
+                "reset_credits.advice.floor_format",
+                advice.windowName ?? L10n.string("reset_credits.title")
             )
         case .waitForAutomaticReset:
             let percent = Int(((advice.probability ?? 0) * 100).rounded())
@@ -716,13 +724,18 @@ private struct ResetCreditsSection: View {
                 advice.expiresAt.map(L10n.formattedDateTime) ?? "-"
             )
         case .hold:
-            return L10n.string("reset_credits.advice.hold")
+            return L10n.string(
+                strategy == .maximize
+                    ? "reset_credits.advice.hold_maximize"
+                    : "reset_credits.advice.hold"
+            )
         }
     }
 
     private func adviceSymbol(_ advice: ResetCreditAdvisor.Recommendation) -> String {
         switch advice.action {
         case .useNow: return "exclamationmark.circle"
+        case .useAtFloor: return "bolt.circle"
         case .waitForAutomaticReset: return "hourglass"
         case .useBeforeExpiry: return "clock.badge.exclamationmark"
         case .hold: return "checkmark.circle"
@@ -731,7 +744,7 @@ private struct ResetCreditsSection: View {
 
     private func adviceTint(_ advice: ResetCreditAdvisor.Recommendation) -> Color {
         switch advice.action {
-        case .useNow, .useBeforeExpiry: return .orange
+        case .useNow, .useAtFloor, .useBeforeExpiry: return .orange
         case .waitForAutomaticReset, .hold: return .secondary
         }
     }
