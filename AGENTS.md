@@ -151,7 +151,10 @@ has changed.
   Codex accounts (`showsResetForecast`); an OpenCode account must neither show it
   nor trigger a fetch. The UI must keep the "community estimate, not an OpenAI
   guarantee" wording in every state and hide the section when a fetch fails
-  instead of showing a stale number as current.
+  instead of showing a stale number as current. The tracker's signal names are
+  opaque, so the signals row carries a question-mark help icon whose tooltip
+  explains that the percentage is the sum of the signals and what each one
+  measures; keep that explanation in every supported language.
 - `Core/RateLimitResetCredits.swift` decodes optional banked-reset summaries and
   detail rows from the rate-limit response. Missing or `null` summaries mean
   unavailable information rather than a confirmed zero balance.
@@ -598,7 +601,7 @@ Codex App Server.
 ### Candidate follow-ups
 
 - [x] Add the opt-in community reset estimate: an hourly-throttled anonymous read
-  of `codexreset.vercel.app/api/status`, a popover section with the probability,
+  of `pingreset.com/api/status`, a popover section with the probability,
   last/next expected reset and the tracker's signals, an off-by-default setting,
   and a permanent "estimate, not a guarantee" label. Later work: combine it with
   the exhaustion forecast to recommend when to spend a banked reset.

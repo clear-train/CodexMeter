@@ -16,10 +16,7 @@ struct ResetForecastSection: View {
                 probabilityRow(forecast)
                 metaRow(forecast)
                 if !forecast.signals.isEmpty {
-                    Text(signalSummary(forecast.signals))
-                        .font(.caption2)
-                        .foregroundStyle(.secondary)
-                        .fixedSize(horizontal: false, vertical: true)
+                    signalRow(forecast.signals)
                 }
                 disclaimerRow(forecast)
             } else if let errorMessage {
@@ -127,6 +124,42 @@ struct ResetForecastSection: View {
         .font(.caption2)
         .foregroundStyle(.tertiary)
         .fixedSize(horizontal: false, vertical: true)
+    }
+
+    /// Keeps the one-line summary compact and puts the explanation behind a help
+    /// icon, because the tracker's signal names are not self-explanatory.
+    private func signalRow(_ signals: [ResetForecastSignal]) -> some View {
+        HStack(alignment: .firstTextBaseline, spacing: 4) {
+            Text(signalSummary(signals))
+                .fixedSize(horizontal: false, vertical: true)
+            Image(systemName: "questionmark.circle")
+                .imageScale(.small)
+                .foregroundStyle(.secondary)
+                .help(signalHelp(signals))
+                .accessibilityLabel(L10n.string("reset.forecast.signals.help_accessibility"))
+            Spacer(minLength: 0)
+        }
+        .font(.caption2)
+        .foregroundStyle(.secondary)
+    }
+
+    /// Explains what the impact numbers are and what each signal measures.
+    private func signalHelp(_ signals: [ResetForecastSignal]) -> String {
+        var lines = [L10n.string("reset.forecast.signals.help_header")]
+        for signal in signals {
+            let nameKey = "reset.forecast.signal.\(signal.key)"
+            let helpKey = "reset.forecast.signal.\(signal.key).help"
+            let localizedName = L10n.string(nameKey)
+            let name = localizedName == nameKey ? signal.key.capitalized : localizedName
+            let impact = signal.impactPoints > 0 ? "+\(signal.impactPoints)" : "\(signal.impactPoints)"
+            lines.append("")
+            lines.append("\(name) \(signal.value) (\(impact))")
+            let description = L10n.string(helpKey)
+            if description != helpKey {
+                lines.append(description)
+            }
+        }
+        return lines.joined(separator: "\n")
     }
 
     private func signalSummary(_ signals: [ResetForecastSignal]) -> String {

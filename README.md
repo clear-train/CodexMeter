@@ -233,7 +233,7 @@ section with the probability of a reset today, the last and next expected reset,
 and the signals the tracker used (baseline interval, cooldown, announcement,
 sleep window).
 
-The data comes from [codexreset.vercel.app](https://codexreset.vercel.app), a
+The data comes from [pingreset.com](https://pingreset.com), a
 community project that is not affiliated with OpenAI. CodexMeter sends a plain
 anonymous `GET` to its public JSON endpoint, at most once an hour, only when the
 popover opens or you ask for a refresh. No account, quota, credential, or
@@ -396,7 +396,7 @@ verification checklist, and planned developer customization options.
 - It does not add its own analytics or tracking.
 - The optional reset estimate is the only feature that contacts a third party.
   It is off by default; when enabled it sends an anonymous `GET` to
-  `codexreset.vercel.app` at most once an hour while the popover is open, with no
+  `pingreset.com` at most once an hour while the popover is open, with no
   account, quota, or credential data, and refuses redirects.
 - Remote notification channels are disabled by default. When enabled, the
   configured service receives the quota-window name and observed remaining

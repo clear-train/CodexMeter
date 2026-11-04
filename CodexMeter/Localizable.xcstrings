@@ -6014,19 +6014,42 @@
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "announcement"
+            "value": "Announcement"
           }
         },
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "预告"
+            "value": "预告推文"
           }
         },
         "zh-Hant": {
           "stringUnit": {
             "state": "translated",
-            "value": "預告"
+            "value": "預告推文"
+          }
+        }
+      }
+    },
+    "reset.forecast.signal.announcement.help": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Whether an active “will reset” post exists; when there is one it dominates the forecast."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "是否存在有效的「即将重置」推文；一旦有，它会主导整个预测。"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "是否存在有效的「即將重置」推文；一旦有，它會主導整個預測。"
           }
         }
       }
@@ -6037,19 +6060,42 @@
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "baseline"
+            "value": "Historical cadence"
           }
         },
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "基线间隔"
+            "value": "历史节奏"
           }
         },
         "zh-Hant": {
           "stringUnit": {
             "state": "translated",
-            "value": "基線間隔"
+            "value": "歷史節奏"
+          }
+        }
+      }
+    },
+    "reset.forecast.signal.baseline.help": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Base rate from the average gap between past resets: the longer the current drought, the higher the odds."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "按过去两次重置之间的平均间隔算出的基础概率：距上次重置越久，概率越高。"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "依過去兩次重置之間的平均間隔算出的基礎機率：距上次重置越久，機率越高。"
           }
         }
       }
@@ -6060,19 +6106,42 @@
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "cooldown"
+            "value": "Cooldown"
           }
         },
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "冷却期"
+            "value": "冷却"
           }
         },
         "zh-Hant": {
           "stringUnit": {
             "state": "translated",
-            "value": "冷卻期"
+            "value": "冷卻"
+          }
+        }
+      }
+    },
+    "reset.forecast.signal.cooldown.help": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Time since the last reset: a fresh reset suppresses the odds, a long drought raises them."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "距上次重置的时间：刚重置过会压低概率，间隔越久越会抬高。"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "距上次重置的時間：剛重置過會壓低機率，間隔越久越會抬高。"
           }
         }
       }
@@ -6083,19 +6152,88 @@
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "sleep"
+            "value": "Off-hours"
           }
         },
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "睡眠时段"
+            "value": "休息时段"
           }
         },
         "zh-Hant": {
           "stringUnit": {
             "state": "translated",
-            "value": "睡眠時段"
+            "value": "休息時段"
+          }
+        }
+      }
+    },
+    "reset.forecast.signal.sleep.help": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "A reference adjustment for configured off-hours; it does not guarantee resets avoid them."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "按配置的低活跃时段做的参考调整，并不保证重置会避开这些时段。"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "依設定的低活躍時段所做的參考調整，並不保證重置會避開這些時段。"
+          }
+        }
+      }
+    },
+    "reset.forecast.signals.help_accessibility": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Explains each reset signal"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "解释每个重置信号"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "解釋每個重置訊號"
+          }
+        }
+      }
+    },
+    "reset.forecast.signals.help_header": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "These signals add up to the percentage above; the value in parentheses is each one's contribution in percentage points."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "这些信号相加得出上面的百分比，括号里是各自的贡献（百分点）。"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "這些訊號相加得出上面的百分比，括號裡是各自的貢獻（百分點）。"
           }
         }
       }
@@ -8498,19 +8636,19 @@
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Fetches the anonymous daily reset probability published by codexreset.vercel.app, at most once an hour while the popover is open. Only a plain GET is sent: no account, quota, or credential data. The estimate describes Codex quota resets, so it only appears on Codex accounts. The value is a community estimate and is never presented as a guarantee."
+            "value": "Fetches the anonymous daily reset probability published by pingreset.com, at most once an hour while the popover is open. Only a plain GET is sent: no account, quota, or credential data. The estimate describes Codex quota resets, so it only appears on Codex accounts. The value is a community estimate and is never presented as a guarantee."
           }
         },
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "在 popover 打开时，最多每小时一次，匿名读取 codexreset.vercel.app 公布的当日重置概率。请求只有一个 GET，不含账号、额度或凭据信息。该估算只描述 Codex 的额度重置，因此仅在 Codex 账号下显示。数值为社区估算，不会被呈现为官方保证。"
+            "value": "在 popover 打开时，最多每小时一次，匿名读取 pingreset.com 公布的当日重置概率。请求只有一个 GET，不含账号、额度或凭据信息。该估算只描述 Codex 的额度重置，因此仅在 Codex 账号下显示。数值为社区估算，不会被呈现为官方保证。"
           }
         },
         "zh-Hant": {
           "stringUnit": {
             "state": "translated",
-            "value": "在 popover 開啟時，最多每小時一次，匿名讀取 codexreset.vercel.app 公布的當日重置機率。請求只有一個 GET，不含帳號、額度或憑證資訊。此估算只描述 Codex 的額度重置，因此僅在 Codex 帳號下顯示。數值為社群估算，不會被呈現為官方保證。"
+            "value": "在 popover 開啟時，最多每小時一次，匿名讀取 pingreset.com 公布的當日重置機率。請求只有一個 GET，不含帳號、額度或憑證資訊。此估算只描述 Codex 的額度重置，因此僅在 Codex 帳號下顯示。數值為社群估算，不會被呈現為官方保證。"
           }
         }
       }

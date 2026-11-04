@@ -223,7 +223,7 @@ final class AppSettings: ObservableObject {
         didSet { defaults.set(openCodeGoChannel.rawValue, forKey: Keys.openCodeGoChannel) }
     }
 
-    /// Opt-in: fetch the community reset estimate from codexreset.vercel.app.
+    /// Opt-in: fetch the community reset estimate from pingreset.com.
     /// Off by default because it is the only feature that contacts a third party.
     @Published var resetForecastEnabled: Bool {
         didSet { defaults.set(resetForecastEnabled, forKey: Keys.resetForecastEnabled) }

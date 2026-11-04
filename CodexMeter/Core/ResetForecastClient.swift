@@ -3,10 +3,10 @@ import Foundation
 /// Fetches the community reset estimate from the tracker's public JSON endpoint.
 /// The request is anonymous: it carries no account, quota, or credential data.
 actor ResetForecastClient {
-    static let defaultEndpoint = URL(string: "https://codexreset.vercel.app/api/status")!
+    static let defaultEndpoint = URL(string: "https://pingreset.com/api/status")!
     /// Human-readable page opened from the popover; the JSON endpoint is not a
     /// useful destination for a click.
-    static let pageURL = URL(string: "https://codexreset.vercel.app/en")!
+    static let pageURL = URL(string: "https://pingreset.com/en")!
 
     private let endpoint: URL
     private let requestTimeout: TimeInterval
