@@ -78,14 +78,25 @@ struct AppSettingsView: View {
 
     private var generalSettings: some View {
         Form {
+            Section(L10n.string("settings.accounts.section")) {
+                ForEach(service.accounts) { account in
+                    accountRow(account)
+                }
+                Button(L10n.string("settings.accounts.add")) { addCodexAccount() }
+                Text(L10n.string("settings.accounts.help"))
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+            }
             Section(L10n.string("settings.provider.section")) {
                 Picker(L10n.string("settings.provider.source"), selection: Binding(
-                    get: { service.provider },
+                    get: { service.accountID },
                     set: { service.select($0) }
                 )) {
-                    ForEach(UsageProvider.allCases) { Text($0.localizedName).tag($0) }
+                    ForEach(service.accounts) { account in
+                        Text(accountTitle(account)).tag(account.id)
+                    }
                 }
-                if service.provider == .openCodeGo {
+                if service.activeAccount.provider == .openCodeGo {
                     Picker(L10n.string("settings.provider.opencode_channel"), selection: Binding(
                         get: { settings.openCodeGoChannel },
                         set: { settings.openCodeGoChannel = $0; service.openCodeGo.updateChannel($0) }
@@ -118,6 +129,59 @@ struct AppSettingsView: View {
             }
         }
         .formStyle(.grouped)
+    }
+
+    private func accountTitle(_ account: StoredQuotaAccount) -> String {
+        guard let remaining = service.remainingPercent(for: account.id) else {
+            return account.displayName
+        }
+        return "\(account.displayName) \(remaining)%"
+    }
+
+    private func accountRow(_ account: StoredQuotaAccount) -> some View {
+        LabeledContent {
+            HStack(spacing: 8) {
+                if let home = account.codexHomeDirectory {
+                    Text(home.path)
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                        .lineLimit(1)
+                        .truncationMode(.middle)
+                }
+                if account.isRemovable {
+                    Button {
+                        service.removeAccount(id: account.id)
+                    } label: {
+                        Image(systemName: "minus.circle")
+                    }
+                    .buttonStyle(.borderless)
+                    .help(L10n.string("settings.accounts.remove"))
+                    .accessibilityLabel(L10n.string("settings.accounts.remove"))
+                }
+            }
+        } label: {
+            Text(account.displayName)
+        }
+    }
+
+    /// A Codex account is a separate `CODEX_HOME`, so adding one is choosing the
+    /// folder that login was written to.
+    private func addCodexAccount() {
+        let panel = NSOpenPanel()
+        panel.canChooseDirectories = true
+        panel.canChooseFiles = false
+        panel.allowsMultipleSelection = false
+        panel.canCreateDirectories = false
+        panel.message = L10n.string("settings.accounts.add_message")
+        panel.prompt = L10n.string("settings.accounts.add")
+        panel.begin { response in
+            guard response == .OK, let url = panel.url else { return }
+            let existingCodexCount = service.accounts.filter { $0.provider == .codex }.count
+            service.addCodexAccount(
+                homeDirectory: url,
+                displayName: "\(L10n.string("settings.accounts.codex_name")) \(existingCodexCount + 1)"
+            )
+        }
     }
 
     private var historySettings: some View {

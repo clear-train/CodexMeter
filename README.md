@@ -55,10 +55,13 @@ charts, and history, OpenCode Go limits.
 - Supports OpenCode Go as a second quota source. It shows the 5-hour, weekly,
   and monthly Go meters with the same rings, pace hints, reset countdowns, and
   quota history, and keeps OpenCode's history in its own local partition.
-- Monitors Codex and OpenCode Go at the same time. Both keep refreshing in the
-  background; a rounded glass switcher at the top of the popover moves between
-  them, each segment carries its own most-constrained percentage, and the
-  control becomes a menu once more sources are added.
+- Monitors every configured account at the same time. All of them keep
+  refreshing in the background; a rounded glass switcher at the top of the
+  popover moves between them, each segment carries its own most-constrained
+  percentage, and the control becomes a menu once more accounts are added.
+- Watches several Codex logins side by side. Each Codex account is one
+  `CODEX_HOME` folder, added from Settings, with its own quota, its own menu bar
+  ring choice, and its own history partition.
 - Compares remaining quota with remaining time to indicate whether consumption
   is on pace.
 - Refreshes quota on launch, every 10 seconds while the menu is open, every
@@ -188,9 +191,28 @@ the same three meters answer both "can I keep going now" and "will this last the
 week". OpenCode Go also exposes per-model budgets; CodexMeter does not read them
 yet. See the [OpenCode Go documentation](https://opencode.ai/docs/go).
 
-Only the selected source polls. Switching sources stops the other source's
-refresh timer and releases its visible history partition, so the two providers
-never compete for the menu bar, for local history, or for your OpenCode login.
+Every account keeps polling, so the switcher shows live percentages for the
+accounts you are not looking at. Only the account on screen owns the visible
+history partition; the others keep recording under their own account key.
+
+### Multiple Codex accounts
+
+Codex stores a login inside `$CODEX_HOME` (by default `~/.codex`), so a second
+Codex account is simply a second folder with its own `auth.json`. In
+**Settings → General → Accounts**, choose *Add Codex Account…* and pick that
+folder:
+
+```bash
+CODEX_HOME=~/codex-work codex login
+```
+
+CodexMeter then launches a separate `codex app-server` for that folder and shows
+it as its own tab. If the folder has no `auth.json`, the account reports "sign in
+with Codex in this account folder" instead of starting a child process that
+cannot answer. Removing an extra account drops its tab and stops its child
+process, but leaves its recorded history and the folder itself untouched. The
+default `~/.codex` account and OpenCode Go cannot be removed, so the app always
+has something to show.
 
 ## Requirements
 
@@ -353,6 +375,11 @@ verification checklist, and planned developer customization options.
 - Usage history is stored only in
   `~/Library/Application Support/CodexMeter/UsageHistory.sqlite` and can be
   exported or cleared by the user.
+- Extra Codex accounts stay inside their own `CODEX_HOME` folders. CodexMeter
+  never copies or reads those credentials itself; the Codex App Server it
+  launches for that folder owns them, exactly as it does for the default login.
+  Account tabs, menu bar ring choices, and history partitions are keyed by a
+  local account identifier, and exports never include the folder path.
 - For OpenCode Go, CodexMeter reads OpenCode's own credential read-only and
   never writes to `opencode.db`, never stores the access or refresh token, never
   logs the workspace email, and never refreshes a token itself. Only the JSON-RPC
@@ -368,10 +395,12 @@ Mac App Store distribution.
 
 The menu-bar **Settings** entry opens one resizable window with General,
 Menu Bar & Popover, Notifications, History & Backup, and Developer, followed by About.
-**General → Quota source** picks the tab shown first and, for OpenCode Go, the
-connection between the official CLI and the direct API. **Menu Bar & Popover →
-Ring source** chooses the quota window drawn in the menu bar; the choice is
-remembered per provider, and both providers keep refreshing while one is shown.
+**General → Accounts** lists every watched account, adds a Codex login by
+choosing its `CODEX_HOME`, and removes extra ones. **General → Quota source**
+picks the tab shown first and, for OpenCode Go, the connection between the
+official CLI and the direct API. **Menu Bar & Popover → Ring source** chooses the
+quota window drawn in the menu bar; the choice is remembered per account, and
+every account keeps refreshing while one is shown.
 Existing preferences are preserved. About/update information opens in the same
 settings window; Usage History remains a separate window.
 

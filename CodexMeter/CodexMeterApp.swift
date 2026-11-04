@@ -54,10 +54,7 @@ struct CodexMeterApp: App {
                 isStale: menuBarSnapshot.isStale,
                 appearance: settings.developerAppearance,
                 flashContext: settings.developerPreviewEnabled ? nil : usageService.historyAccountKey.map {
-                    $0 + ":" + (settings.popoverContent.selectedMenuBarWindow(
-                        from: usageService.windows,
-                        provider: usageService.provider
-                    )?.historyID ?? "")
+                    $0 + ":" + (usageService.menuBarWindow(for: usageService.accountID)?.historyID ?? "")
                 },
                 captionOverride: usageService.menuBarCaption
             )
@@ -101,10 +98,7 @@ struct CodexMeterApp: App {
             return settings.developerPreviewSnapshot
         }
 
-        let window = settings.popoverContent.selectedMenuBarWindow(
-            from: usageService.windows,
-            provider: usageService.provider
-        )
+        let window = usageService.menuBarWindow(for: usageService.accountID)
         return MenuBarPreviewSnapshot(
             remainingPercent: window?.remainingPercent,
             remainingTimePercent: window?.remainingTimePercent(at: Date()),

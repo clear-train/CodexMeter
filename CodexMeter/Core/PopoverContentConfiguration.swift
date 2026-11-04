@@ -15,7 +15,7 @@ struct PopoverContentConfiguration: Codable, Equatable, Sendable {
     var sectionOrder: [PopoverContentSection]
     var hiddenSections: Set<PopoverContentSection>
     var hiddenQuotaWindowIDs: Set<String>
-    /// Menu bar window choice per provider, keyed by `UsageProvider.rawValue`.
+    /// Menu bar window choice per account, keyed by `StoredQuotaAccount.id`.
     /// A missing entry means automatic mode: follow the most constrained window.
     var menuBarQuotaWindowIDs: [String: String]
 
@@ -80,20 +80,20 @@ struct PopoverContentConfiguration: Codable, Equatable, Sendable {
         sectionOrder.swapAt(sourceIndex, destinationIndex)
     }
 
-    func menuBarWindowID(for provider: UsageProvider) -> String? {
-        menuBarQuotaWindowIDs[provider.rawValue]
+    func menuBarWindowID(forAccount accountID: String) -> String? {
+        menuBarQuotaWindowIDs[accountID]
     }
 
-    mutating func setMenuBarWindowID(_ id: String?, provider: UsageProvider) {
+    mutating func setMenuBarWindowID(_ id: String?, account accountID: String) {
         if let id {
-            menuBarQuotaWindowIDs[provider.rawValue] = id
+            menuBarQuotaWindowIDs[accountID] = id
         } else {
-            menuBarQuotaWindowIDs.removeValue(forKey: provider.rawValue)
+            menuBarQuotaWindowIDs.removeValue(forKey: accountID)
         }
     }
 
-    func selectedMenuBarWindow(from windows: [UsageWindow], provider: UsageProvider) -> UsageWindow? {
-        if let id = menuBarQuotaWindowIDs[provider.rawValue],
+    func selectedMenuBarWindow(from windows: [UsageWindow], account accountID: String) -> UsageWindow? {
+        if let id = menuBarQuotaWindowIDs[accountID],
            let selected = windows.first(where: { $0.historyID == id }) {
             return selected
         }
@@ -123,6 +123,19 @@ struct PopoverContentConfiguration: Codable, Equatable, Sendable {
     /// migration only and never written again.
     private enum LegacyCodingKeys: String, CodingKey {
         case menuBarQuotaWindowID
+    }
+
+    /// Choices were briefly keyed by provider rather than account.
+    private static func migratingLegacyProviderKeys(_ stored: [String: String]) -> [String: String] {
+        var migrated: [String: String] = [:]
+        for (key, value) in stored {
+            if let provider = UsageProvider(rawValue: key) {
+                migrated[provider == .codex ? StoredQuotaAccount.defaultCodexID : StoredQuotaAccount.openCodeGoID] = value
+            } else {
+                migrated[key] = value
+            }
+        }
+        return migrated
     }
 
     private static func legacyMenuBarWindowID(from decoder: Decoder) -> String? {
@@ -155,10 +168,10 @@ struct PopoverContentConfiguration: Codable, Equatable, Sendable {
             [String: String].self,
             forKey: .menuBarQuotaWindowIDs
         ) {
-            menuBarQuotaWindowIDs = stored
+            menuBarQuotaWindowIDs = Self.migratingLegacyProviderKeys(stored)
         } else if let legacyID = Self.legacyMenuBarWindowID(from: decoder) {
             // Pre-provider releases stored one global selection; it belonged to Codex.
-            menuBarQuotaWindowIDs = [UsageProvider.codex.rawValue: legacyID]
+            menuBarQuotaWindowIDs = [StoredQuotaAccount.defaultCodexID: legacyID]
         } else {
             menuBarQuotaWindowIDs = defaults.menuBarQuotaWindowIDs
         }

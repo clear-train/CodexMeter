@@ -11,6 +11,28 @@ nonisolated enum UsageProvider: String, CaseIterable, Codable, Identifiable, Sen
 
     var id: String { rawValue }
 
+    /// Accepts the spellings that can appear in saved preferences: the canonical
+    /// raw value, the history namespace with a dash, and older lowercase JSON.
+    /// Preferences outlive source edits, so decoding must not throw on them.
+    init(from decoder: Decoder) throws {
+        let raw = try decoder.singleValueContainer().decode(String.self)
+        let normalized = raw
+            .lowercased()
+            .replacingOccurrences(of: "-", with: "")
+            .replacingOccurrences(of: "_", with: "")
+        switch normalized {
+        case "codex":
+            self = .codex
+        case "opencodego":
+            self = .openCodeGo
+        default:
+            throw DecodingError.dataCorruptedError(
+                in: try decoder.singleValueContainer(),
+                debugDescription: "Unknown quota provider \(raw)"
+            )
+        }
+    }
+
     /// Stable namespace that keeps local history separate per provider.
     var historyNamespace: String {
         switch self {

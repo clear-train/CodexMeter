@@ -36,7 +36,7 @@ struct PopoverCustomizationView: View {
                 }
                 .accessibilityHint(L10n.string("settings.popover.ring_source.hint"))
 
-                Text(L10n.format("settings.popover.ring_source.provider_format", service.provider.localizedName))
+                Text(L10n.format("settings.popover.ring_source.provider_format", service.activeAccount.displayName))
                     .font(.callout)
                     .foregroundStyle(.secondary)
                     .fixedSize(horizontal: false, vertical: true)
@@ -74,10 +74,10 @@ struct PopoverCustomizationView: View {
     private var menuBarWindowSelection: Binding<String?> {
         Binding(
             get: {
-                let storedID = settings.popoverContent.menuBarWindowID(for: service.provider)
+                let storedID = settings.popoverContent.menuBarWindowID(forAccount: service.accountID)
                 return service.windows.contains { $0.historyID == storedID } ? storedID : nil
             },
-            set: { settings.setMenuBarWindowID($0, provider: service.provider) }
+            set: { settings.setMenuBarWindowID($0, account: service.accountID) }
         )
     }
 

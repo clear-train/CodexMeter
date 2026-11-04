@@ -197,9 +197,24 @@ final class AppSettings: ObservableObject {
         }
     }
 
-    /// Active quota source. Existing installations keep Codex as the default.
-    @Published var usageProvider: UsageProvider {
-        didSet { defaults.set(usageProvider.rawValue, forKey: Keys.usageProvider) }
+    /// Quota accounts the app watches, in popover order. The first entry is the
+    /// default Codex login; extra Codex entries point at their own `CODEX_HOME`.
+    @Published var accounts: [StoredQuotaAccount] {
+        didSet {
+            let normalized = Self.normalizedAccounts(accounts)
+            if normalized != accounts {
+                accounts = normalized
+                return
+            }
+            if let data = try? JSONEncoder().encode(normalized) {
+                defaults.set(data, forKey: Keys.usageAccounts)
+            }
+        }
+    }
+
+    /// Account the popover shows first after launch.
+    @Published var usageAccountID: String {
+        didSet { defaults.set(usageAccountID, forKey: Keys.usageAccountID) }
     }
 
     /// Preferred OpenCode Go transport. The other transport is always used as a
@@ -340,7 +355,10 @@ final class AppSettings: ObservableObject {
         static let language = "language"
         static let menuBarStyle = "menuBarStyle"
         static let popoverContent = "popover.contentConfiguration"
-        static let usageProvider = "usage.provider"
+        static let usageAccounts = "usage.accounts"
+        static let usageAccountID = "usage.accountID"
+        /// Pre-account release stored a single provider here.
+        static let legacyUsageProvider = "usage.provider"
         static let openCodeGoChannel = "usage.openCodeGo.channel"
         static let notificationsEnabled = "notificationsEnabled"
         static let notificationThreshold = "notificationThreshold"
@@ -402,9 +420,23 @@ final class AppSettings: ObservableObject {
         } else {
             popoverContent = .defaultValue
         }
-        usageProvider = UsageProvider(
-            rawValue: defaults.string(forKey: Keys.usageProvider) ?? ""
-        ) ?? .codex
+        let storedAccounts: [StoredQuotaAccount]
+        if let data = defaults.data(forKey: Keys.usageAccounts),
+           let decoded = try? JSONDecoder().decode([StoredQuotaAccount].self, from: data) {
+            storedAccounts = Self.normalizedAccounts(decoded)
+        } else {
+            storedAccounts = StoredQuotaAccount.seededAccounts()
+        }
+        accounts = storedAccounts
+        let legacyProvider = defaults.string(forKey: Keys.legacyUsageProvider)
+        if let storedAccountID = defaults.string(forKey: Keys.usageAccountID),
+           storedAccounts.contains(where: { $0.id == storedAccountID }) {
+            usageAccountID = storedAccountID
+        } else if legacyProvider == UsageProvider.openCodeGo.rawValue {
+            usageAccountID = StoredQuotaAccount.openCodeGoID
+        } else {
+            usageAccountID = StoredQuotaAccount.defaultCodexID
+        }
         openCodeGoChannel = OpenCodeGoChannel(
             rawValue: defaults.string(forKey: Keys.openCodeGoChannel) ?? ""
         ) ?? .cli
@@ -524,10 +556,14 @@ final class AppSettings: ObservableObject {
         popoverContent = updated
     }
 
-    func setMenuBarWindowID(_ id: String?, provider: UsageProvider) {
+    func setMenuBarWindowID(_ id: String?, account: String) {
         var updated = popoverContent
-        updated.setMenuBarWindowID(id, provider: provider)
+        updated.setMenuBarWindowID(id, account: account)
         popoverContent = updated
+    }
+
+    static func normalizedAccounts(_ accounts: [StoredQuotaAccount]) -> [StoredQuotaAccount] {
+        StoredQuotaAccount.normalized(accounts)
     }
 
     func resetPopoverContent() {

@@ -7,10 +7,10 @@ import SwiftUI
 /// the segments stop fitting the popover width, so the same control collapses
 /// into a menu instead of compressing labels into unreadable stubs.
 struct ProviderSwitcherView: View {
-    let providers: [UsageProvider]
-    let selection: UsageProvider
-    let title: (UsageProvider) -> String
-    let select: (UsageProvider) -> Void
+    let accounts: [StoredQuotaAccount]
+    let selectionID: String
+    let title: (StoredQuotaAccount) -> String
+    let select: (String) -> Void
 
     /// Segments need roughly this much width per source before the labels start
     /// truncating at the popover's fixed content width.
@@ -18,7 +18,11 @@ struct ProviderSwitcherView: View {
 
     @Namespace private var highlight
 
-    private var usesMenu: Bool { providers.count > Self.segmentedLimit }
+    private var usesMenu: Bool { accounts.count > Self.segmentedLimit }
+
+    private var selectedAccount: StoredQuotaAccount {
+        accounts.first { $0.id == selectionID } ?? StoredQuotaAccount.defaultAccount()
+    }
 
     var body: some View {
         Group {
@@ -36,22 +40,22 @@ struct ProviderSwitcherView: View {
 
     private var segmentedSwitcher: some View {
         HStack(spacing: 2) {
-            ForEach(providers) { provider in
-                segment(for: provider)
+            ForEach(accounts) { account in
+                segment(for: account)
             }
         }
         .padding(3)
         .modifier(GlassCapsuleBackground())
-        .animation(.easeInOut(duration: 0.2), value: selection)
+        .animation(.easeInOut(duration: 0.2), value: selectionID)
     }
 
-    private func segment(for provider: UsageProvider) -> some View {
-        let isSelected = provider == selection
+    private func segment(for account: StoredQuotaAccount) -> some View {
+        let isSelected = account.id == selectionID
         return Button {
             guard !isSelected else { return }
-            select(provider)
+            select(account.id)
         } label: {
-            Text(title(provider))
+            Text(title(account))
                 .font(.callout.weight(isSelected ? .semibold : .regular))
                 .foregroundStyle(isSelected ? .primary : .secondary)
                 .lineLimit(1)
@@ -75,21 +79,22 @@ struct ProviderSwitcherView: View {
 
     private var menuSwitcher: some View {
         Menu {
-            ForEach(providers) { provider in
+            ForEach(accounts) { account in
+                let isSelected = account.id == selectionID
                 Button {
-                    guard provider != selection else { return }
-                    select(provider)
+                    guard !isSelected else { return }
+                    select(account.id)
                 } label: {
-                    if provider == selection {
-                        Label(title(provider), systemImage: "checkmark")
+                    if isSelected {
+                        Label(title(account), systemImage: "checkmark")
                     } else {
-                        Text(title(provider))
+                        Text(title(account))
                     }
                 }
             }
         } label: {
             HStack(spacing: 6) {
-                Text(title(selection))
+                Text(title(selectedAccount))
                     .font(.callout.weight(.medium))
                     .lineLimit(1)
                 Image(systemName: "chevron.up.chevron.down")

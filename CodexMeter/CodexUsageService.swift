@@ -26,6 +26,8 @@ final class CodexUsageService: ObservableObject, UsageSource {
     }
 
     private let settings: AppSettings
+    /// `CODEX_HOME` for this account; nil uses Codex's default (`~/.codex`).
+    private let codexHomeDirectory: URL?
     private let notificationManager: NotificationManager
     let pushNotificationService: PushNotificationService
     private let history: UsageHistoryModel
@@ -65,10 +67,12 @@ final class CodexUsageService: ObservableObject, UsageSource {
     init(
         settings: AppSettings,
         history: UsageHistoryModel,
+        codexHomeDirectory: URL? = nil,
         notificationManager: NotificationManager = NotificationManager(),
         pushNotificationService: PushNotificationService? = nil,
         autostart: Bool = true
     ) {
+        self.codexHomeDirectory = codexHomeDirectory
         self.settings = settings
         self.history = history
         self.notificationManager = notificationManager
@@ -117,17 +121,35 @@ final class CodexUsageService: ObservableObject, UsageSource {
             return
         }
 
+        // An extra account is a separate CODEX_HOME. Without its own auth.json the
+        // App Server cannot report anything, so say so instead of spawning a child
+        // that exits immediately on every retry. Logging in to that home fixes it
+        // on the next refresh because this check runs each time start() is tried.
+        if let codexHomeDirectory,
+           !FileManager.default.fileExists(
+               atPath: codexHomeDirectory.appendingPathComponent("auth.json").path
+           ) {
+            markFailure(L10n.string("error.codex_home_signed_out"))
+            return
+        }
+
         let process = Process()
         let inputPipe = Pipe()
         let outputPipe = Pipe()
         let errorPipe = Pipe()
 
         process.executableURL = codexURL
-        process.environment = CodexProcessEnvironment.make(
+        var environment = CodexProcessEnvironment.make(
             baseEnvironment: ProcessInfo.processInfo.environment,
             executableURL: codexURL,
             homeDirectory: FileManager.default.homeDirectoryForCurrentUser
         )
+        // Codex keeps credentials per CODEX_HOME, so the child process is what
+        // selects which account this service reports on.
+        if let codexHomeDirectory {
+            environment["CODEX_HOME"] = codexHomeDirectory.path
+        }
+        process.environment = environment
         // stdio transport keeps account credentials inside the official Codex process.
         process.arguments = ["app-server", "--listen", "stdio://"]
         process.standardInput = inputPipe

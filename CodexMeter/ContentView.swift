@@ -163,23 +163,23 @@ struct ContentView: View {
         .foregroundStyle(.blue)
     }
 
-    /// Both providers poll continuously; these tabs choose which one the popover
-    /// shows. Each tab carries its own most-constrained percentage so the other
-    /// provider stays readable without switching.
+    /// Every configured account polls continuously; these tabs choose which one
+    /// the popover shows. Each tab carries its own most-constrained percentage so
+    /// the other accounts stay readable without switching.
     private var providerTabs: some View {
         ProviderSwitcherView(
-            providers: service.providers,
-            selection: service.provider,
+            accounts: service.accounts,
+            selectionID: service.accountID,
             title: tabTitle(for:),
             select: service.select
         )
     }
 
-    private func tabTitle(for provider: UsageProvider) -> String {
-        guard let remaining = service.remainingPercent(for: provider) else {
-            return provider.localizedName
+    private func tabTitle(for account: StoredQuotaAccount) -> String {
+        guard let remaining = service.remainingPercent(for: account.id) else {
+            return account.displayName
         }
-        return "\(provider.localizedName) \(remaining)%"
+        return "\(account.displayName) \(remaining)%"
     }
 
     private var header: some View {

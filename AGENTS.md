@@ -103,17 +103,32 @@ has changed.
   request pair with automatic fallback. Keep both transports working: the CLI
   owns token refresh, and the direct transport must never refresh a token itself
   because that would rotate the credential OpenCode is still using.
-- `UsageSource.swift` and `UsageCoordinator.swift` keep the UI provider-neutral.
+- `UsageSource.swift` and `UsageCoordinator.swift` keep the UI account-neutral.
   Views observe the coordinator, which forwards to the source the popover is
-  showing. Every source keeps its own refresh timer and keeps recording history
-  under its own account key; only the shown source calls
+  showing. Every account keeps its own refresh timer and keeps recording history
+  under its own account key; only the shown account calls
   `history.activateAccount` (see `setHistoryViewActive`), because the history
   model exposes a single visible partition. Add a provider by conforming to
   `UsageSource` and adding a case, not by editing views.
+- `Core/QuotaAccount.swift` describes a watched account: a provider, a display
+  name, and for Codex the `CODEX_HOME` folder that holds its `auth.json`. Several
+  Codex accounts coexist because each one is a separate home directory and thus
+  a separate `codex app-server` child with its own credentials. The default
+  `~/.codex` account and OpenCode Go are not removable so the popover always has
+  a source. `StoredQuotaAccount.normalized` keeps the default Codex account first,
+  OpenCode Go last, and drops duplicate identifiers, because one identifier owns
+  one live service and one history partition. A Codex home without `auth.json`
+  must report a sign-in message instead of spawning a child that would exit
+  immediately on every retry.
+- `AppSettings` persists the account list (`usage.accounts`) and the account shown
+  first (`usage.accountID`), migrating the earlier single `usage.provider`
+  preference. `UsageProvider` decoding accepts the canonical raw value plus the
+  namespace and lowercase spellings so saved preferences never fail to decode.
 - `Core/PopoverContentConfiguration.swift` stores the menu bar ring window per
-  provider (`menuBarQuotaWindowIDs`, keyed by `UsageProvider.rawValue`) and still
-  decodes the pre-provider single `menuBarQuotaWindowID` for migration.
-- `ProviderSwitcherView.swift` draws the popover's source switcher: a rounded
+  account (`menuBarQuotaWindowIDs`, keyed by account identifier) and still
+  decodes both the pre-provider single `menuBarQuotaWindowID` and the earlier
+  provider-keyed dictionary for migration.
+- `ProviderSwitcherView.swift` draws the popover's account switcher: a rounded
   glass capsule with an animated sliding highlight while three or fewer sources
   exist, collapsing to a checkmarked menu past that so labels never truncate.
   Use native Liquid Glass on macOS 26 and a material plus hairline edge earlier.
@@ -598,6 +613,18 @@ Codex App Server.
   cannot supply it. Both providers now poll in parallel and the popover switches
   between them with tabs; the menu bar ring window is chosen per provider.
   Later work: per-model Go budgets, extra-usage spending, and other providers.
+
+- [x] Support **several accounts at once**, starting with multiple Codex
+  logins. Model each watched account explicitly (provider, display name, and the
+  Codex `CODEX_HOME` folder), let users add a Codex account by choosing that
+  folder and remove any account beyond the two provider defaults, and keep a
+  separate child process, quota snapshot, menu bar ring choice, and history
+  partition per account. Every account keeps polling in the background while
+  only the shown one owns the visible history partition. Report a clear sign-in
+  message for a Codex home that has no credentials instead of retrying a child
+  process that cannot answer, and migrate the earlier single-provider
+  preference. Later work: per-account notification thresholds and a sign-in
+  helper that runs `codex login` for a new folder.
 
 - [ ] Add an optional **System Monitor** module, starting with real-time network
   throughput in the menu bar. Show separate upload and download rates with
