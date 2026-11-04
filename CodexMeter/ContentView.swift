@@ -320,6 +320,9 @@ struct ContentView: View {
             if let summary = service.rateLimitResetCredits {
                 ResetCreditsSection(
                     summary: summary,
+                    windows: service.windows,
+                    samples: history.quotaSamples,
+                    forecast: service.resetForecast.forecast,
                     appearance: settings.developerAppearance
                 )
             }
@@ -630,6 +633,9 @@ private struct PopoverScreenHeightReader: NSViewRepresentable {
 /// Presents banked reset availability without exposing a redemption action.
 private struct ResetCreditsSection: View {
     let summary: CodexRateLimitResetCreditsSummary
+    let windows: [UsageWindow]
+    let samples: [QuotaHistorySample]
+    let forecast: ResetForecast?
     let appearance: MenuBarAppearance
     @Environment(\.colorScheme) private var colorScheme
 
@@ -657,6 +663,13 @@ private struct ResetCreditsSection: View {
                     .foregroundStyle(summary.hasAvailableCredits ? .primary : .secondary)
             }
 
+            if let advice = advice(at: date) {
+                Label(adviceText(advice), systemImage: adviceSymbol(advice))
+                    .font(.caption)
+                    .foregroundStyle(adviceTint(advice))
+                    .fixedSize(horizontal: false, vertical: true)
+            }
+
             ForEach(usableCredits) { credit in
                 resetCreditDetail(credit, at: date)
             }
@@ -668,6 +681,59 @@ private struct ResetCreditsSection: View {
             }
         }
         .frame(maxWidth: .infinity, alignment: .leading)
+    }
+
+    @MainActor
+    private func advice(at date: Date) -> ResetCreditAdvisor.Recommendation? {
+        ResetCreditAdvisor.recommend(
+            windows: windows,
+            samples: samples,
+            summary: summary,
+            forecast: forecast,
+            now: date
+        )
+    }
+
+    @MainActor
+    private func adviceText(_ advice: ResetCreditAdvisor.Recommendation) -> String {
+        switch advice.action {
+        case .useNow:
+            return L10n.format(
+                "reset_credits.advice.use_now_format",
+                advice.windowName ?? L10n.string("reset_credits.title"),
+                advice.exhaustionAt.map(L10n.formattedDateTime) ?? "-"
+            )
+        case .waitForAutomaticReset:
+            let percent = Int(((advice.probability ?? 0) * 100).rounded())
+            return L10n.format(
+                "reset_credits.advice.wait_format",
+                advice.expectedResetAt.map(L10n.formattedDateTime) ?? "-",
+                "\(percent)%"
+            )
+        case .useBeforeExpiry:
+            return L10n.format(
+                "reset_credits.advice.expiry_format",
+                advice.expiresAt.map(L10n.formattedDateTime) ?? "-"
+            )
+        case .hold:
+            return L10n.string("reset_credits.advice.hold")
+        }
+    }
+
+    private func adviceSymbol(_ advice: ResetCreditAdvisor.Recommendation) -> String {
+        switch advice.action {
+        case .useNow: return "exclamationmark.circle"
+        case .waitForAutomaticReset: return "hourglass"
+        case .useBeforeExpiry: return "clock.badge.exclamationmark"
+        case .hold: return "checkmark.circle"
+        }
+    }
+
+    private func adviceTint(_ advice: ResetCreditAdvisor.Recommendation) -> Color {
+        switch advice.action {
+        case .useNow, .useBeforeExpiry: return .orange
+        case .waitForAutomaticReset, .hold: return .secondary
+        }
     }
 
     private var countText: String {

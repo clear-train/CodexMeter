@@ -155,6 +155,15 @@ has changed.
 - `Core/RateLimitResetCredits.swift` decodes optional banked-reset summaries and
   detail rows from the rate-limit response. Missing or `null` summaries mean
   unavailable information rather than a confirmed zero balance.
+- `Core/ResetCreditAdvisor.swift` turns banked resets, the active-time exhaustion
+  estimate, and the community reset estimate into the one-line suggestion shown
+  with the banked resets. Keep its rule order: spend now when a window is
+  projected to run out before its own reset, hold when a likely automatic reset
+  is expected before the credit expires, spend before the deadline when the
+  credit expires soon and quota is already above the ideal pace, otherwise hold.
+  Keep the thresholds as default arguments (6 hours of risk, 60% probability, a
+  48-hour expiry warning), keep the advice read-only so it never spends a reset,
+  and return nothing when no usable credit exists.
 - `Core/HistoryAccountIdentity.swift`, `Core/HistoryModels.swift`,
   `Core/UsageHistoryStore.swift`, and `Core/SemanticVersion.swift` contain
   testable pseudonymous account partitioning, history, SQLite migration,
@@ -621,6 +630,9 @@ Codex App Server.
   detailed, and expired responses with tests. Keep the first version read-only;
   do not call `account/rateLimitResetCredit/consume` until a separate, explicitly
   confirmed redemption design prevents accidental use.
+  `ResetCreditAdvisor` now suggests when to spend a banked reset by combining the
+  active-time exhaustion estimate with the community reset probability, and the
+  suggestion stays read-only too.
 
 - [x] Add **menu-bar popover content customization** in Settings. Let users
   independently show or hide each quota window returned by Codex—including the

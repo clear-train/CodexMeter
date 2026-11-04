@@ -6215,6 +6215,98 @@
         }
       }
     },
+    "reset_credits.advice.expiry_format": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Use it before %@: the credit expires then and quota is already above the ideal pace."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "建议在 %@ 前用掉：该券届时过期，而额度已在超速消耗。"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "建議在 %@ 前用掉：該券屆時過期，而額度已在超速消耗。"
+          }
+        }
+      }
+    },
+    "reset_credits.advice.hold": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "No need to spend a credit yet: quota still lasts until its own reset."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "暂时不必用券：额度仍能撑到自动重置。"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "暫時不必用券：額度仍能撐到自動重置。"
+          }
+        }
+      }
+    },
+    "reset_credits.advice.use_now_format": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Use a reset now: %@ is projected to run out at %@, before its own reset."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "建议现在用掉一张券：%@ 预计 %@ 耗尽，早于自动重置。"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "建議現在用掉一張券：%@ 預計 %@ 耗盡，早於自動重置。"
+          }
+        }
+      }
+    },
+    "reset_credits.advice.wait_format": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Hold the credit: the community tracker expects a reset around %@ (%@)."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "先别用券：社区估计 %@ 前后有 %@ 概率自动重置。"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "先別用券：社群估計 %@ 前後有 %@ 機率自動重置。"
+          }
+        }
+      }
+    },
     "reset_credits.available_format": {
       "extractionState": "stale",
       "localizations": {

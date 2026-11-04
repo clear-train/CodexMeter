@@ -50,8 +50,9 @@ charts, and history, OpenCode Go limits.
 - Displays the standard 5-hour and weekly Codex quota windows by default, with
   reset countdowns and detailed progress bars.
 - Shows available banked Codex rate-limit resets as one compact lifetime
-  progress bar and expiration time per reset. This view is read-only and cannot
-  redeem a reset.
+  progress bar and expiration time per reset. A one-line suggestion explains
+  whether to spend one now, wait for an expected automatic reset, or use it
+  before it expires. This view is read-only and cannot redeem a reset.
 - Supports OpenCode Go as a second quota source. It shows the 5-hour, weekly,
   and monthly Go meters with the same rings, pace hints, reset countdowns, and
   quota history, and keeps OpenCode's history in its own local partition.

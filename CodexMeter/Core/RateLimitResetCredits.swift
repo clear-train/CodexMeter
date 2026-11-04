@@ -32,6 +32,24 @@ struct CodexRateLimitResetCredit: Identifiable, Equatable, Sendable, Decodable {
     let resetType: ResetType
     let status: Status
 
+    init(
+        id: String,
+        title: String?,
+        description: String? = nil,
+        grantedAt: Date,
+        expiresAt: Date?,
+        resetType: ResetType = .codexRateLimits,
+        status: Status = .available
+    ) {
+        self.id = id
+        self.title = title
+        self.description = description
+        self.grantedAt = grantedAt
+        self.expiresAt = expiresAt
+        self.resetType = resetType
+        self.status = status
+    }
+
     func isUsable(at date: Date) -> Bool {
         guard status == .available else { return false }
         return expiresAt.map { $0 > date } ?? true
@@ -92,6 +110,11 @@ struct CodexRateLimitResetCredit: Identifiable, Equatable, Sendable, Decodable {
 struct CodexRateLimitResetCreditsSummary: Equatable, Sendable, Decodable {
     let availableCount: Int64
     let credits: [CodexRateLimitResetCredit]?
+
+    init(availableCount: Int64, credits: [CodexRateLimitResetCredit]?) {
+        self.availableCount = max(0, availableCount)
+        self.credits = credits
+    }
 
     var hasAvailableCredits: Bool {
         availableCount > 0
