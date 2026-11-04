@@ -289,7 +289,7 @@ struct ContentView: View {
             case .resetCredits:
                 return service.rateLimitResetCredits != nil
             case .resetForecast:
-                return settings.resetForecastEnabled
+                return settings.resetForecastEnabled && service.showsResetForecast
             case .quotaHistory:
                 return true
             case .tokenActivity:

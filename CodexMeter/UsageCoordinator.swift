@@ -95,6 +95,11 @@ final class UsageCoordinator: ObservableObject {
         applyHistoryViewOwnership()
         // The other account may not have polled since the popover opened.
         activeSource.refreshIfNeeded(maxAge: 10)
+        // Hold both rules in one place: switching away from Codex hides the
+        // estimate, and switching back may fetch it again once the hour is up.
+        if showsResetForecast {
+            resetForecast.noteActivity()
+        }
     }
 
     /// Adds another Codex login by pointing at its own `CODEX_HOME` directory.
@@ -232,9 +237,17 @@ final class UsageCoordinator: ObservableObject {
         return activeAccount.displayName
     }
 
+    /// The community tracker estimates Codex quota resets, so the section and its
+    /// requests belong to Codex accounts only.
+    var showsResetForecast: Bool {
+        activeAccount.provider == .codex
+    }
+
     func refresh() {
         activeSource.refresh()
-        resetForecast.noteActivity()
+        if showsResetForecast {
+            resetForecast.noteActivity()
+        }
     }
 
     func refreshIfNeeded(maxAge: TimeInterval = 10) {
@@ -245,7 +258,7 @@ final class UsageCoordinator: ObservableObject {
         for account in accounts {
             source(for: account.id)?.setPopoverVisible(visible)
         }
-        if visible {
+        if visible, showsResetForecast {
             resetForecast.noteActivity()
         }
     }

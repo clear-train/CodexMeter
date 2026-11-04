@@ -8360,19 +8360,19 @@
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Fetches the anonymous daily reset probability published by codexreset.vercel.app, at most once an hour while the popover is open. Only a plain GET is sent: no account, quota, or credential data. The value is a community estimate and is never presented as a guarantee."
+            "value": "Fetches the anonymous daily reset probability published by codexreset.vercel.app, at most once an hour while the popover is open. Only a plain GET is sent: no account, quota, or credential data. The estimate describes Codex quota resets, so it only appears on Codex accounts. The value is a community estimate and is never presented as a guarantee."
           }
         },
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "当 popover 打开时，最多每小时一次向 codexreset.vercel.app 发起匿名 GET，用于显示该社区估算的每日重置概率。请求只包含普通 GET，不发送任何账号、配额或凭据信息。该数值是社区估算，不会以官方保证的形式呈现。"
+            "value": "在 popover 打开时，最多每小时一次，匿名读取 codexreset.vercel.app 公布的当日重置概率。请求只有一个 GET，不含账号、额度或凭据信息。该估算只描述 Codex 的额度重置，因此仅在 Codex 账号下显示。数值为社区估算，不会被呈现为官方保证。"
           }
         },
         "zh-Hant": {
           "stringUnit": {
             "state": "translated",
-            "value": "當 popover 開啟時，最多每小時一次向 codexreset.vercel.app 發起匿名 GET，用於顯示該社群估算的每日重置機率。請求只包含一般 GET，不傳送任何帳號、配額或憑證資訊。該數值是社群估算，不會以官方保證的形式呈現。"
+            "value": "在 popover 開啟時，最多每小時一次，匿名讀取 codexreset.vercel.app 公布的當日重置機率。請求只有一個 GET，不含帳號、額度或憑證資訊。此估算只描述 Codex 的額度重置，因此僅在 Codex 帳號下顯示。數值為社群估算，不會被呈現為官方保證。"
           }
         }
       }

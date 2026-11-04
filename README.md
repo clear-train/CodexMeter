@@ -235,7 +235,9 @@ popover opens or you ask for a refresh. No account, quota, credential, or
 history data is included, and redirects are refused so the request cannot move
 to another origin. The section keeps the wording "community estimate, not an
 OpenAI guarantee" in every state, hides itself when the fetch fails, and never
-blocks quota refreshes.
+blocks quota refreshes. The tracker describes Codex resets, so the section only
+appears while a Codex account is shown; an OpenCode Go account neither displays
+it nor triggers a request.
 
 ## Requirements
 

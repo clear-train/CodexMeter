@@ -146,10 +146,12 @@ has changed.
   `ResetForecastService.swift`, and `ResetForecastSection.swift` implement the
   opt-in community reset estimate. It is the only outbound third-party request in
   the app: no idle timer, at most one anonymous `GET` per hour, triggered only by
-  opening the popover or a manual refresh, and redirects are refused. The UI must
-  keep the "community estimate, not an OpenAI guarantee" wording in every state
-  and hide the section when a fetch fails instead of showing a stale number as
-  current.
+  opening the popover or a manual refresh, and redirects are refused. The tracker
+  estimates Codex quota resets, so the section and its requests are limited to
+  Codex accounts (`showsResetForecast`); an OpenCode account must neither show it
+  nor trigger a fetch. The UI must keep the "community estimate, not an OpenAI
+  guarantee" wording in every state and hide the section when a fetch fails
+  instead of showing a stale number as current.
 - `Core/RateLimitResetCredits.swift` decodes optional banked-reset summaries and
   detail rows from the rate-limit response. Missing or `null` summaries mean
   unavailable information rather than a confirmed zero balance.
