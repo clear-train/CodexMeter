@@ -8,6 +8,8 @@ struct ResetForecastSection: View {
     let errorMessage: String?
     let onOpenSource: () -> Void
 
+    @State private var isShowingSignalHelp = false
+
     var body: some View {
         VStack(alignment: .leading, spacing: 8) {
             header
@@ -126,34 +128,82 @@ struct ResetForecastSection: View {
         .fixedSize(horizontal: false, vertical: true)
     }
 
-    /// Keeps the one-line summary compact and puts the explanation behind a help
-    /// icon, because the tracker's signal names are not self-explanatory.
+    /// Keeps the one-line summary compact and puts the explanation behind a
+    /// help button. Hovering shows a tooltip and clicking expands the same text,
+    /// because menu bar popovers do not always deliver tooltip tracking.
     private func signalRow(_ signals: [ResetForecastSignal]) -> some View {
-        HStack(alignment: .firstTextBaseline, spacing: 4) {
-            Text(signalSummary(signals))
-                .fixedSize(horizontal: false, vertical: true)
-            Image(systemName: "questionmark.circle")
-                .imageScale(.small)
+        VStack(alignment: .leading, spacing: 5) {
+            HStack(alignment: .firstTextBaseline, spacing: 4) {
+                Text(signalSummary(signals))
+                    .fixedSize(horizontal: false, vertical: true)
+
+                Button {
+                    isShowingSignalHelp.toggle()
+                } label: {
+                    Image(systemName: isShowingSignalHelp ? "questionmark.circle.fill" : "questionmark.circle")
+                        .imageScale(.small)
+                }
+                .buttonStyle(.plain)
                 .foregroundStyle(.secondary)
+                .contentShape(Rectangle())
                 .help(signalHelp(signals))
                 .accessibilityLabel(L10n.string("reset.forecast.signals.help_accessibility"))
-            Spacer(minLength: 0)
+
+                Spacer(minLength: 0)
+            }
+            .font(.caption2)
+            .foregroundStyle(.secondary)
+
+            if isShowingSignalHelp {
+                signalHelpPanel(signals)
+            }
+        }
+    }
+
+    /// Lists every signal with its current value, impact, and meaning.
+    private func signalHelpPanel(_ signals: [ResetForecastSignal]) -> some View {
+        VStack(alignment: .leading, spacing: 6) {
+            Text(L10n.string("reset.forecast.signals.help_header"))
+                .fixedSize(horizontal: false, vertical: true)
+
+            ForEach(signals) { signal in
+                VStack(alignment: .leading, spacing: 1) {
+                    Text("\(signalName(signal)) \(signal.value) (\(signalImpact(signal)))")
+                        .fontWeight(.medium)
+                    let helpKey = "reset.forecast.signal.\(signal.key).help"
+                    let description = L10n.string(helpKey)
+                    if description != helpKey {
+                        Text(description)
+                            .foregroundStyle(.tertiary)
+                            .fixedSize(horizontal: false, vertical: true)
+                    }
+                }
+            }
         }
         .font(.caption2)
-        .foregroundStyle(.secondary)
+        .padding(8)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(.quaternary.opacity(0.35), in: RoundedRectangle(cornerRadius: 6, style: .continuous))
+        .fixedSize(horizontal: false, vertical: true)
+    }
+
+    private func signalName(_ signal: ResetForecastSignal) -> String {
+        let key = "reset.forecast.signal.\(signal.key)"
+        let localized = L10n.string(key)
+        return localized == key ? signal.key.capitalized : localized
+    }
+
+    private func signalImpact(_ signal: ResetForecastSignal) -> String {
+        signal.impactPoints > 0 ? "+\(signal.impactPoints)" : "\(signal.impactPoints)"
     }
 
     /// Explains what the impact numbers are and what each signal measures.
     private func signalHelp(_ signals: [ResetForecastSignal]) -> String {
         var lines = [L10n.string("reset.forecast.signals.help_header")]
         for signal in signals {
-            let nameKey = "reset.forecast.signal.\(signal.key)"
-            let helpKey = "reset.forecast.signal.\(signal.key).help"
-            let localizedName = L10n.string(nameKey)
-            let name = localizedName == nameKey ? signal.key.capitalized : localizedName
-            let impact = signal.impactPoints > 0 ? "+\(signal.impactPoints)" : "\(signal.impactPoints)"
             lines.append("")
-            lines.append("\(name) \(signal.value) (\(impact))")
+            lines.append("\(signalName(signal)) \(signal.value) (\(signalImpact(signal)))")
+            let helpKey = "reset.forecast.signal.\(signal.key).help"
             let description = L10n.string(helpKey)
             if description != helpKey {
                 lines.append(description)
@@ -165,9 +215,7 @@ struct ResetForecastSection: View {
     private func signalSummary(_ signals: [ResetForecastSignal]) -> String {
         signals
             .map { signal in
-                let name = L10n.string("reset.forecast.signal.\(signal.key)")
-                let impact = signal.impactPoints > 0 ? "+\(signal.impactPoints)" : "\(signal.impactPoints)"
-                return "\(name) \(signal.value) (\(impact))"
+                "\(signalName(signal)) \(signal.value) (\(signalImpact(signal)))"
             }
             .joined(separator: " · ")
     }
