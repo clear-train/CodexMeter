@@ -5,7 +5,7 @@ import SQLite3
 ///
 /// The app never writes this credential back. OpenCode owns refresh tokens, and
 /// rotating one outside OpenCode would sign the user out of their own CLI.
-struct OpenCodeGoCredential: Equatable, Sendable {
+nonisolated struct OpenCodeGoCredential: Equatable, Sendable {
     let accessToken: String
     let refreshToken: String?
     let expiresAt: Date?
@@ -25,7 +25,7 @@ struct OpenCodeGoCredential: Equatable, Sendable {
 /// OpenCode persists console sessions in `opencode.db` (v2) or `auth.json`
 /// (v1). Both are opened read-only so a metadata refresh in CodexMeter can never
 /// corrupt or rotate the CLI's session state.
-enum OpenCodeGoCredentialStore {
+nonisolated enum OpenCodeGoCredentialStore {
     static let databaseFileName = "opencode.db"
 
     static func defaultDataDirectory(

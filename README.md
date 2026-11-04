@@ -56,8 +56,9 @@ charts, and history, OpenCode Go limits.
   and monthly Go meters with the same rings, pace hints, reset countdowns, and
   quota history, and keeps OpenCode's history in its own local partition.
 - Monitors Codex and OpenCode Go at the same time. Both keep refreshing in the
-  background; tabs at the top of the popover switch which one is shown, and each
-  tab carries its own most-constrained percentage.
+  background; a rounded glass switcher at the top of the popover moves between
+  them, each segment carries its own most-constrained percentage, and the
+  control becomes a menu once more sources are added.
 - Compares remaining quota with remaining time to indicate whether consumption
   is on pace.
 - Refreshes quota on launch, every 10 seconds while the menu is open, every

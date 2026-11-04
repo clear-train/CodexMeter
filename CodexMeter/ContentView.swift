@@ -167,17 +167,12 @@ struct ContentView: View {
     /// shows. Each tab carries its own most-constrained percentage so the other
     /// provider stays readable without switching.
     private var providerTabs: some View {
-        Picker("", selection: Binding(
-            get: { service.provider },
-            set: { service.select($0) }
-        )) {
-            ForEach(service.providers) { provider in
-                Text(tabTitle(for: provider)).tag(provider)
-            }
-        }
-        .pickerStyle(.segmented)
-        .labelsHidden()
-        .accessibilityLabel(L10n.string("settings.provider.source"))
+        ProviderSwitcherView(
+            providers: service.providers,
+            selection: service.provider,
+            title: tabTitle(for:),
+            select: service.select
+        )
     }
 
     private func tabTitle(for provider: UsageProvider) -> String {

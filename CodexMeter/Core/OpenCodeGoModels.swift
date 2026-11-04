@@ -5,7 +5,7 @@ import Foundation
 /// The service reports *used* percentage for every meter, matching the Codex
 /// `usedPercent` convention so the shared ring, pace, and history calculations
 /// work unchanged.
-struct OpenCodeGoMeter: Equatable, Sendable {
+nonisolated struct OpenCodeGoMeter: Equatable, Sendable {
     let kind: UsageWindowKind
     let usedPercent: Int
     let isLimited: Bool
@@ -13,7 +13,7 @@ struct OpenCodeGoMeter: Equatable, Sendable {
 }
 
 /// A complete OpenCode Go usage reading from either data path.
-struct OpenCodeGoUsageSnapshot: Equatable, Sendable {
+nonisolated struct OpenCodeGoUsageSnapshot: Equatable, Sendable {
     let workspaceID: String?
     let workspaceName: String?
     let usageURL: URL?
@@ -21,7 +21,7 @@ struct OpenCodeGoUsageSnapshot: Equatable, Sendable {
     let fetchedAt: Date
 }
 
-enum OpenCodeGoUsageError: Error, Equatable {
+nonisolated enum OpenCodeGoUsageError: Error, Equatable {
     case invalidPayload
     case notSubscribed
     case unauthorized
@@ -33,7 +33,7 @@ enum OpenCodeGoUsageError: Error, Equatable {
 /// `resetsAt` as epoch milliseconds, while the direct endpoint returns
 /// `{"usage": ...}` with ISO 8601 reset strings. Both are accepted here so a
 /// single tolerant parser feeds the UI.
-enum OpenCodeGoUsageParser {
+nonisolated enum OpenCodeGoUsageParser {
     static func parseCommandPayload(_ data: Data, fetchedAt: Date = Date()) throws -> OpenCodeGoUsageSnapshot {
         let root = try jsonObject(from: data)
         if root["data"] is NSNull {
@@ -155,7 +155,7 @@ enum OpenCodeGoUsageParser {
 }
 
 /// Builds the shared `UsageWindow` values the rest of the app renders.
-enum OpenCodeGoWindowMapper {
+nonisolated enum OpenCodeGoWindowMapper {
     static func windows(
         from snapshot: OpenCodeGoUsageSnapshot,
         names: [UsageWindowKind: String]

@@ -43,16 +43,16 @@ final class OpenCodeGoUsageService: ObservableObject, UsageSource {
     private var lastHistoryAccountKey: String?
     private var lastHistoryRecordAt: Date?
 
-    nonisolated init(
+    init(
         settings: AppSettings,
         history: UsageHistoryModel,
-        notificationManager: NotificationManager = NotificationManager(),
+        notificationManager: NotificationManager? = nil,
         pushNotificationService: PushNotificationService? = nil,
         autostart: Bool = true
     ) {
         self.settings = settings
         self.history = history
-        self.notificationManager = notificationManager
+        self.notificationManager = notificationManager ?? NotificationManager()
         self.pushNotificationService = pushNotificationService ?? PushNotificationService(settings: settings)
         self.client = OpenCodeGoClient(channel: settings.openCodeGoChannel)
 

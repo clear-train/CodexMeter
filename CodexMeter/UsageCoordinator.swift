@@ -31,14 +31,14 @@ final class UsageCoordinator: ObservableObject {
     /// Providers the popover can show, in tab order.
     var providers: [UsageProvider] { UsageProvider.allCases }
 
-    func source(for provider: UsageProvider) -> UsageSource {
+    func source(for provider: UsageProvider) -> any UsageSource {
         switch provider {
         case .codex: codex
         case .openCodeGo: openCodeGo
         }
     }
 
-    var activeSource: UsageSource { source(for: provider) }
+    var activeSource: any UsageSource { source(for: provider) }
 
     func remainingPercent(for provider: UsageProvider) -> Int? {
         source(for: provider).mostConstrainedRemainingPercent

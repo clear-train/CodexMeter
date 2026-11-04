@@ -34,7 +34,7 @@ struct CodexRefreshSchedule {
 }
 
 enum CodexExecutableLocator {
-    static func locate(
+    nonisolated static func locate(
         homeDirectory: URL,
         fileManager: FileManager = .default,
         systemCandidateURLs: [URL] = [
@@ -97,7 +97,7 @@ enum CodexProcessPipe {
 }
 
 enum CodexProcessEnvironment {
-    static func make(
+    nonisolated static func make(
         baseEnvironment: [String: String],
         executableURL: URL,
         homeDirectory: URL

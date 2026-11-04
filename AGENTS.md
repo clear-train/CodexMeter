@@ -113,6 +113,10 @@ has changed.
 - `Core/PopoverContentConfiguration.swift` stores the menu bar ring window per
   provider (`menuBarQuotaWindowIDs`, keyed by `UsageProvider.rawValue`) and still
   decodes the pre-provider single `menuBarQuotaWindowID` for migration.
+- `ProviderSwitcherView.swift` draws the popover's source switcher: a rounded
+  glass capsule with an animated sliding highlight while three or fewer sources
+  exist, collapsing to a checkmarked menu past that so labels never truncate.
+  Use native Liquid Glass on macOS 26 and a material plus hairline edge earlier.
 - `OpenCodeGoUsageService.swift` mirrors the quota-facing surface of
   `CodexUsageService` and records quota history under the OpenCode workspace key.
   Token activity and banked resets stay unavailable for providers that do not

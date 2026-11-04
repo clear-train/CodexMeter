@@ -5,7 +5,7 @@ import Foundation
 /// Every provider exposes the same window shape so the rings, pace hints and
 /// history charts stay provider agnostic. Anything Codex specific (banked
 /// resets, token activity) is reported as `nil` by the other providers.
-enum UsageProvider: String, CaseIterable, Codable, Identifiable, Sendable {
+nonisolated enum UsageProvider: String, CaseIterable, Codable, Identifiable, Sendable {
     case codex
     case openCodeGo
 
@@ -27,7 +27,7 @@ enum UsageProvider: String, CaseIterable, Codable, Identifiable, Sendable {
 }
 
 /// The window kinds a provider can report.
-enum UsageWindowKind: String, CaseIterable, Sendable {
+nonisolated enum UsageWindowKind: String, CaseIterable, Sendable {
     case rolling
     case weekly
     case monthly
