@@ -158,7 +158,8 @@ nonisolated enum OpenCodeGoUsageParser {
 nonisolated enum OpenCodeGoWindowMapper {
     static func windows(
         from snapshot: OpenCodeGoUsageSnapshot,
-        names: [UsageWindowKind: String]
+        names: [UsageWindowKind: String],
+        calendar: Calendar = .current
     ) -> [UsageWindow] {
         snapshot.meters.compactMap { meter in
             guard let name = names[meter.kind] else { return nil }
@@ -166,9 +167,28 @@ nonisolated enum OpenCodeGoWindowMapper {
                 id: "opencode-go-\(meter.kind.rawValue)",
                 name: name,
                 usedPercent: meter.usedPercent,
-                windowDurationMins: meter.kind.nominalDurationMins,
-                resetsAt: meter.resetsAt
+                windowDurationMins: durationMins(for: meter, calendar: calendar),
+                resetsAt: meter.resetsAt,
+                isDurationDerived: meter.kind == .monthly
             )
+        }
+    }
+
+    /// The gateway reports only a percentage and the next reset instant for the
+    /// monthly meter, so its length has to come from the reset date itself. The
+    /// billing anchor is a calendar day, therefore subtract one month in the
+    /// user's calendar instead of assuming 30 days.
+    static func durationMins(for meter: OpenCodeGoMeter, calendar: Calendar = .current) -> Int? {
+        switch meter.kind {
+        case .rolling, .weekly:
+            return meter.kind.nominalDurationMins
+        case .monthly:
+            guard let resetsAt = meter.resetsAt,
+                  let start = calendar.date(byAdding: .month, value: -1, to: resetsAt)
+            else { return nil }
+            let minutes = resetsAt.timeIntervalSince(start) / 60
+            guard minutes > 0 else { return nil }
+            return Int(minutes.rounded())
         }
     }
 }

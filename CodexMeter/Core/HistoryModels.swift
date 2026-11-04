@@ -318,7 +318,11 @@ extension UsageWindow {
     /// App Server's primary/secondary slots can swap when a new window appears.
     /// History follows the quota bucket and duration instead of that slot position.
     nonisolated var historyID: String {
-        QuotaHistoryWindowIdentity.make(
+        // A derived length is only an approximation of the real cycle, so it must
+        // not split one window into a new bucket whenever the length changes. The
+        // provider-owned identifier is already stable, so keep it as the bucket.
+        guard !isDurationDerived else { return id }
+        return QuotaHistoryWindowIdentity.make(
             sourceID: id,
             durationMins: windowDurationMins
         )

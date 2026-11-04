@@ -198,4 +198,88 @@ final class OpenCodeGoTests: XCTestCase {
         XCTAssertEqual(UsageWindowKind.weekly.nominalDurationMins, 10_080)
         XCTAssertNil(UsageWindowKind.monthly.nominalDurationMins)
     }
+
+    /// The monthly Go meter ships only a reset instant, so the remaining-time bar
+    /// has to measure the month that ends at that instant.
+    func testMonthlyWindowDurationIsDerivedFromResetDate() throws {
+        let data = Data("""
+        {"data": {"workspace": {"id": "wrk_01"},
+                  "go": {"monthly": {"percent": 11, "limited": false, "resetsAt": 1795413157000}}}}
+        """.utf8)
+        let snapshot = try OpenCodeGoUsageParser.parseCommandPayload(data, fetchedAt: now)
+        let windows = OpenCodeGoWindowMapper.windows(
+            from: snapshot,
+            names: [.monthly: "Monthly"],
+            calendar: Self.utcCalendar
+        )
+
+        // Compare against a moment still inside that month of service.
+        let reference = Date(timeIntervalSince1970: 1_794_000_000)
+        let window = try XCTUnwrap(windows.first)
+        XCTAssertEqual(window.windowDurationMins, 31 * 24 * 60)
+        XCTAssertNotNil(window.remainingTimePercent(at: reference))
+        // The length comes from the calendar, so it must not become the bucket.
+        XCTAssertTrue(window.isDurationDerived)
+        XCTAssertEqual(window.historyID, "opencode-go-monthly")
+    }
+
+    /// A calendar month can be 28 to 31 days, so a derived length must never
+    /// move the monthly history into a differently named bucket.
+    func testMonthlyHistoryBucketIsStableAcrossMonthLengths() throws {
+        func window(resetsAt: Double) throws -> UsageWindow {
+            let data = Data("""
+            {"data": {"workspace": {"id": "wrk_01"},
+                      "go": {"monthly": {"percent": 11, "limited": false, "resetsAt": \(Int(resetsAt))}}}}
+            """.utf8)
+            let snapshot = try OpenCodeGoUsageParser.parseCommandPayload(data, fetchedAt: now)
+            return try XCTUnwrap(
+                OpenCodeGoWindowMapper.windows(
+                    from: snapshot,
+                    names: [.monthly: "Monthly"],
+                    calendar: Self.utcCalendar
+                ).first
+            )
+        }
+
+        let novemberReset = try window(resetsAt: 1_795_413_157_000)
+        let septemberReset = try window(resetsAt: 1_792_734_757_000)
+        XCTAssertEqual(novemberReset.historyID, septemberReset.historyID)
+        XCTAssertNotEqual(novemberReset.windowDurationMins, septemberReset.windowDurationMins)
+    }
+
+    func testWeeklyWindowKeepsDurationScopedHistoryBucket() throws {
+        let data = Data("""
+        {"data": {"workspace": {"id": "wrk_01"},
+                  "go": {"weekly": {"percent": 9, "limited": false, "resetsAt": 1794182400000}}}}
+        """.utf8)
+        let snapshot = try OpenCodeGoUsageParser.parseCommandPayload(data, fetchedAt: now)
+        let window = try XCTUnwrap(
+            OpenCodeGoWindowMapper.windows(from: snapshot, names: [.weekly: "Weekly"]).first
+        )
+        XCTAssertFalse(window.isDurationDerived)
+        XCTAssertEqual(window.historyID, "duration:10080:opencode-go-weekly")
+    }
+
+    func testMonthlyWindowWithoutResetDateHasNoTimeBar() throws {
+        let data = Data("""
+        {"data": {"workspace": {"id": "wrk_01"},
+                  "go": {"monthly": {"percent": 11, "limited": false}}}}
+        """.utf8)
+        let snapshot = try OpenCodeGoUsageParser.parseCommandPayload(data, fetchedAt: now)
+        let windows = OpenCodeGoWindowMapper.windows(
+            from: snapshot,
+            names: [.monthly: "Monthly"],
+            calendar: Self.utcCalendar
+        )
+
+        let window = try XCTUnwrap(windows.first)
+        XCTAssertNil(window.windowDurationMins)
+        XCTAssertNil(window.remainingTimePercent(at: now))
+    }
+
+    private static let utcCalendar: Calendar = {
+        var calendar = Calendar(identifier: .gregorian)
+        calendar.timeZone = TimeZone(secondsFromGMT: 0) ?? .gmt
+        return calendar
+    }()
 }

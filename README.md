@@ -192,7 +192,9 @@ preferred connection fails:
 OpenCode Go limits are monthly dollar budgets. The 5-hour window corresponds to
 20% of that budget, the weekly window to 50%, and the monthly window to 100%, so
 the same three meters answer both "can I keep going now" and "will this last the
-week". OpenCode Go also exposes per-model budgets; CodexMeter does not read them
+week". The monthly meter returns only its reset moment, so CodexMeter treats the
+cycle as the calendar month that ends there; that gives the monthly row the same
+remaining-time bar as the other windows while its history stays in one bucket. OpenCode Go also exposes per-model budgets; CodexMeter does not read them
 yet. See the [OpenCode Go documentation](https://opencode.ai/docs/go).
 
 Every account keeps polling, so the switcher shows live percentages for the

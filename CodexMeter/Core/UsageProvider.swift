@@ -55,6 +55,9 @@ nonisolated enum UsageWindowKind: String, CaseIterable, Sendable {
     case monthly
 
     /// Nominal window length, used for the "remaining time" ring and pace hints.
+    ///
+    /// The monthly Go meter has no fixed length, so its duration is derived from
+    /// the reported reset date in `OpenCodeGoWindowMapper` instead.
     var nominalDurationMins: Int? {
         switch self {
         case .rolling: 300

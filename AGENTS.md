@@ -103,6 +103,12 @@ has changed.
   request pair with automatic fallback. Keep both transports working: the CLI
   owns token refresh, and the direct transport must never refresh a token itself
   because that would rotate the credential OpenCode is still using.
+  The monthly meter reports only a reset instant, so
+  `OpenCodeGoWindowMapper.durationMins` infers its cycle length as one calendar
+  month back from that instant; the inferred length feeds the remaining-time bar
+  and pace hints but is flagged `isDurationDerived` so `historyID` stays the
+  provider-owned identifier instead of a duration bucket that would change with
+  every 28- to 31-day month.
 - `UsageSource.swift` and `UsageCoordinator.swift` keep the UI account-neutral.
   Views observe the coordinator, which forwards to the source the popover is
   showing. Every account keeps its own refresh timer and keeps recording history

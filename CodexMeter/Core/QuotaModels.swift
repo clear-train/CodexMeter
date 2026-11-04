@@ -19,6 +19,27 @@ struct UsageWindow: Identifiable, Equatable, Sendable {
     let usedPercent: Int
     let windowDurationMins: Int?
     let resetsAt: Date?
+    /// True when `windowDurationMins` was inferred rather than reported by the
+    /// source. Derived lengths still drive the time bar and pace hints, but they
+    /// must not take part in the stored history identity because they can differ
+    /// from one cycle to the next.
+    let isDurationDerived: Bool
+
+    nonisolated init(
+        id: String,
+        name: String,
+        usedPercent: Int,
+        windowDurationMins: Int?,
+        resetsAt: Date?,
+        isDurationDerived: Bool = false
+    ) {
+        self.id = id
+        self.name = name
+        self.usedPercent = usedPercent
+        self.windowDurationMins = windowDurationMins
+        self.resetsAt = resetsAt
+        self.isDurationDerived = isDurationDerived
+    }
 
     var remainingPercent: Int {
         Self.clamp(100 - usedPercent)
